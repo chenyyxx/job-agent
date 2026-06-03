@@ -3,3 +3,4 @@ dist/
 data/jobs.json
 data/matched.json
 data/companies-enriched.json
+data/review-output.json
