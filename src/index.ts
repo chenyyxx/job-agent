@@ -110,6 +110,9 @@ async function main() {
         matchedPath: resolve(DATA_DIR, "matched.json"),
         outputPath: resolve(DATA_DIR, "review-output.json"),
         top,
+        requireH1b: hasFlag("--require-h1b"),
+        excludeNoH1b: hasFlag("--exclude-no-h1b"),
+        requirePerm: hasFlag("--require-perm"),
       });
       break;
     }
@@ -185,6 +188,9 @@ async function main() {
       await review({
         matchedPath: resolve(DATA_DIR, "matched.json"),
         outputPath: resolve(DATA_DIR, "review-output.json"),
+        requireH1b: hasFlag("--require-h1b"),
+        excludeNoH1b: hasFlag("--exclude-no-h1b"),
+        requirePerm: hasFlag("--require-perm"),
       });
 
       console.log("\n═══ Pipeline complete. Review jobs above, then run: job-agent apply ═══");
@@ -201,7 +207,7 @@ Commands:
   layoff-scrape  Fetch layoffs.fyi data → layoff-cache.json
   search         Query ATS boards (--ats=, --limit= [test only], --locations=, --skip-titles=)
   match          Score + rank jobs (--cv=resume.txt, --skip-llm, --max-yoe=)
-  review         Display top matches (--top=20)
+  review         Display top matches (--top=20, --require-h1b, --exclude-no-h1b, --require-perm)
   apply          Open approved job URLs (--approved=file.json)
   run            Full pipeline (--skip-enrich, --skip-llm, --limit= [test], --locations=, --skip-titles=, --max-yoe=)
 `);

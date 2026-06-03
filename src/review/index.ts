@@ -10,18 +10,27 @@ export interface ReviewOptions {
   top?: number;
 }
 
-// Visa sponsorship (H-1B work visa) — comes from the JOB POSTING text.
-function h1b(j: MatchedJob): { label: string; evidence?: string; adj: number } {
-  if (j.parsed?.visa_sponsorship === false) return { label: "❌ No H-1B sponsorship (per posting)", evidence: j.parsed.visa_evidence, adj: -15 };
-  if (j.parsed?.visa_sponsorship === true) return { label: "✅ Sponsors H-1B (per posting)", evidence: j.parsed.visa_evidence, adj: 5 };
-  return { label: "❓ H-1B not stated in posting", adj: 0 };
+export interface ReviewOptions {
+  matchedPath: string;
+  outputPath: string;
+  top?: number;
+  requireH1b?: boolean;     // keep only roles whose posting sponsors H-1B
+  excludeNoH1b?: boolean;   // drop roles whose posting explicitly will NOT sponsor
+  requirePerm?: boolean;    // keep only companies with DOL PERM filing history
 }
 
-// PERM (green card) — comes from DOL ETA-9089 disclosure filing history. NOT the same as H-1B.
-function perm(filings: number): { label: string; adj: number } {
+// Visa sponsorship (H-1B work visa) — from the JOB POSTING text. Display only, not ranked.
+function h1b(j: MatchedJob): { label: string; evidence?: string } {
+  if (j.parsed?.visa_sponsorship === false) return { label: "❌ No H-1B sponsorship (per posting)", evidence: j.parsed.visa_evidence };
+  if (j.parsed?.visa_sponsorship === true) return { label: "✅ Sponsors H-1B (per posting)", evidence: j.parsed.visa_evidence };
+  return { label: "❓ H-1B not stated in posting" };
+}
+
+// PERM (green card) — from DOL ETA-9089 disclosure filing history. NOT the same as H-1B.
+function perm(filings: number): { label: string } {
   return filings > 0
-    ? { label: `✅ Files PERM / green card — DOL: ~${filings} filings/qtr`, adj: 15 }
-    : { label: "❓ No DOL PERM filing record (green-card outlook unknown)", adj: 0 };
+    ? { label: `✅ Files PERM / green card — DOL: ~${filings} filings/qtr` }
+    : { label: "❓ No DOL PERM filing record (green-card outlook unknown)" };
 }
 
 export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
@@ -36,16 +45,20 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
     }
   }
 
-  // Blended ranking: fit is primary; H-1B (JD) and PERM (DOL) are separate soft adjustments.
+  // Ranking = fit only (skills/experience). YOE/location are hard filters upstream;
+  // visa/PERM are NOT ranked — they are optional post-filters + displayed info.
   const fit = (j: MatchedJob) => j.llm_match?.score ?? j.keyword_score ?? 0;
-  const ranked = jobs
+  let ranked = jobs
     .map((j, idx) => {
       const filings = permByCompany.get(j.company.toLowerCase()) ?? 0;
-      const h = h1b(j);
-      const p = perm(filings);
-      return { j, idx, h, p, filings, score: fit(j) + h.adj + p.adj };
+      return { j, idx, h: h1b(j), p: perm(filings), filings, score: fit(j) };
     })
     .sort((a, b) => b.score - a.score || a.idx - b.idx);
+
+  // Optional sponsorship/PERM filters applied AFTER ranking.
+  if (opts.requireH1b) ranked = ranked.filter(r => r.j.parsed?.visa_sponsorship === true);
+  if (opts.excludeNoH1b) ranked = ranked.filter(r => r.j.parsed?.visa_sponsorship !== false);
+  if (opts.requirePerm) ranked = ranked.filter(r => r.filings > 0);
 
   const display = ranked.slice(0, opts.top ?? 20);
 
