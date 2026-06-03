@@ -29,7 +29,7 @@ External tools (standalone CLIs, minimal changes):
 ## Pipeline
 
 ```
-job-agent run [query] [--skip-enrich] [--skip-llm] [--limit=N]
+job-agent run [query] [--skip-enrich] [--skip-llm] [--limit=N] [--locations=..] [--skip-titles=..] [--max-yoe=N]
 
   1. Discover  → data/companies.json              (974 companies)
   2. Enrich    → data/companies-enriched.json      (PERM + layoff, skippable)
@@ -46,8 +46,8 @@ Each stage reads previous stage's output. Each is also a standalone command:
 ```bash
 job-agent discover                          # refresh company list
 job-agent enrich                            # stamp immigration + layoff
-job-agent search --query "senior SWE"       # search ATS boards
-job-agent match --cv resume.txt             # score + rank
+job-agent search --query "senior SWE"       # search ATS boards (--locations, --skip-titles)
+job-agent match --cv resume.txt             # score + rank (--max-yoe ceiling)
 job-agent review                            # pretty print for human review
 job-agent apply --approved approved.json    # open approved URLs (no auto-submit)
 job-agent perm-import <xlsx|csv>            # build data/perm-cache.json from DOL PERM

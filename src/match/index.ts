@@ -22,6 +22,7 @@ export interface MatchOptions {
   outputPath: string;
   cvPath: string;
   minScore?: number;
+  maxYoe?: number;
 }
 
 // --- Keyword extraction (simplified from job-pro) ---
@@ -70,6 +71,7 @@ export async function match(opts: MatchOptions): Promise<MatchedJob[]> {
       return { ...job, keyword_score: score, match_reasons: reasons };
     })
     .filter(j => j.keyword_score >= minScore)
+    .filter(j => opts.maxYoe == null || j.parsed?.yoe?.min == null || j.parsed.yoe.min <= opts.maxYoe)
     .sort((a, b) => b.keyword_score - a.keyword_score);
 
   writeFileSync(opts.outputPath, JSON.stringify(matched, null, 2));

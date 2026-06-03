@@ -63,6 +63,8 @@ async function main() {
         query,
         atsFilter: atsFlag ? atsFlag.split(",") : undefined,
         limit,
+        locations: getArg("--locations=")?.split(","),
+        skipTitles: getArg("--skip-titles=")?.split(","),
       });
       // Auto-parse descriptions if any have description text
       if (jobs.some(j => j.description)) {
@@ -80,6 +82,7 @@ async function main() {
         jobsPath: resolve(DATA_DIR, "jobs.json"),
         outputPath: resolve(DATA_DIR, "matched.json"),
         cvPath: resolve(cvPath),
+        maxYoe: getArg("--max-yoe=") ? parseInt(getArg("--max-yoe=")!) : undefined,
       });
       // LLM Pass 2 if configured
       if (!skipLlm) {
@@ -123,6 +126,9 @@ async function main() {
       const skipLlm = hasFlag("--skip-llm");
       const limitArg = getArg("--limit=");
       const limit = limitArg ? parseInt(limitArg) : undefined;
+      const locations = getArg("--locations=")?.split(",");
+      const skipTitles = getArg("--skip-titles=")?.split(",");
+      const maxYoe = getArg("--max-yoe=") ? parseInt(getArg("--max-yoe=")!) : undefined;
 
       console.log("═══ job-agent pipeline ═══\n");
 
@@ -144,6 +150,8 @@ async function main() {
         outputPath: resolve(DATA_DIR, "jobs.json"),
         query,
         limit,
+        locations,
+        skipTitles,
       });
       if (jobs.some(j => j.description)) {
         const { jobs: parsed, stats } = parseDescriptions(jobs);
@@ -156,6 +164,7 @@ async function main() {
         jobsPath: resolve(DATA_DIR, "jobs.json"),
         outputPath: resolve(DATA_DIR, "matched.json"),
         cvPath: resolve("./resume.txt"),
+        maxYoe,
       });
 
       if (!skipLlm) {
@@ -190,11 +199,11 @@ Commands:
   enrich         Stamp immigration + layoff data
   perm-import    Import DOL PERM CSV files → perm-cache.json
   layoff-scrape  Fetch layoffs.fyi data → layoff-cache.json
-  search         Query ATS boards (--ats=greenhouse, --limit=10)
-  match          Score + rank jobs (--cv=resume.txt, --skip-llm)
+  search         Query ATS boards (--ats=, --limit= [test only], --locations=, --skip-titles=)
+  match          Score + rank jobs (--cv=resume.txt, --skip-llm, --max-yoe=)
   review         Display top matches (--top=20)
   apply          Open approved job URLs (--approved=file.json)
-  run            Full pipeline (--skip-enrich, --skip-llm, --limit=20)
+  run            Full pipeline (--skip-enrich, --skip-llm, --limit= [test], --locations=, --skip-titles=, --max-yoe=)
 `);
   }
 }

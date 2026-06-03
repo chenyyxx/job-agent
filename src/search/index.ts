@@ -28,6 +28,8 @@ export interface SearchOptions {
   query: string;
   atsFilter?: string[];
   limit?: number;
+  locations?: string[];
+  skipTitles?: string[];
 }
 
 // --- ATS Clients ---
@@ -141,9 +143,8 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
     : filtered;
   console.log(`Searching ${toSearch.length} companies for "${opts.query}"...`);
 
-  const allJobs: Job[] = [];
+  let allJobs: Job[] = [];
   const CONCURRENCY = 5;
-
   for (let i = 0; i < toSearch.length; i += CONCURRENCY) {
     const batch = toSearch.slice(i, i + CONCURRENCY);
     const results = await Promise.allSettled(
@@ -161,6 +162,17 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
         allJobs.push(...r.value);
       }
     }
+  }
+
+  if (opts.skipTitles?.length) {
+    const before = allJobs.length;
+    allJobs = allJobs.filter(j => !opts.skipTitles!.some(t => j.title.toLowerCase().includes(t.toLowerCase())));
+    console.log(`  Title filter: ${before} → ${allJobs.length} (excluded ${opts.skipTitles.join(", ")})`);
+  }
+  if (opts.locations?.length) {
+    const before = allJobs.length;
+    allJobs = allJobs.filter(j => opts.locations!.some(l => j.location.toLowerCase().includes(l.toLowerCase())));
+    console.log(`  Location filter: ${before} → ${allJobs.length} (${opts.locations.join(", ")})`);
   }
 
   writeFileSync(opts.outputPath, JSON.stringify(allJobs, null, 2));

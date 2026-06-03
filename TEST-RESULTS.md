@@ -115,3 +115,17 @@ Three bugs fixed to get here:
 1. Adapter omitted `--cli-binary-format raw-in-base64-out` (AWS CLI v2 rejects inline body).
 2. `/dev/stdout` output concatenated the CLI's `{"contentType":...}` metadata → `JSON.parse` failed. Now writes to a temp file.
 3. Configured model `claude-3-haiku-20240307` is Legacy/blocked → switched to `us.anthropic.claude-haiku-4-5-20251001-v1:0` (inference profile; on-demand bare IDs no longer available).
+
+## #5 Filters + Personalized Run ✅ (2026-06-03 evening)
+
+Location/title filters in search, YOE ceiling in match. Profile: L5 SDE, ~5 YOE, mid-level.
+```
+$ job-agent run "software engineer" --limit=60 \
+    --locations="San Francisco,Remote,Seattle" \
+    --skip-titles="intern,new grad,staff,principal,director,vp" --max-yoe=8
+  Search → 258 jobs → title filter 230 → location filter 32
+  Parsed: 15 salary, 11 YOE, 11 visa
+  LLM: 16 STRONG, 11 MATCH, 5 other
+  Top: Amplitude Senior SWE — 92 STRONG, $165k-247k, 5+ YOE, NO visa sponsorship
+```
+The visa-sponsorship signal now surfaces in results (key for the candidate's situation).
