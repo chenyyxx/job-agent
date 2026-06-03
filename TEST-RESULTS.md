@@ -129,3 +129,24 @@ $ job-agent run "software engineer" --limit=60 \
   Top: Amplitude Senior SWE — 92 STRONG, $165k-247k, 5+ YOE, NO visa sponsorship
 ```
 The visa-sponsorship signal now surfaces in results (key for the candidate's situation).
+
+## Review reframe + visa-parse fix ✅ (2026-06-03 evening)
+
+Review reorganized around the candidate's real goal — **a company that can file PERM /
+sponsor a green card** — not a numeric score:
+- Each entry leads with a VISA/PERM verdict: ✅ files PERM (from DOL enrichment) / ✅ sponsors
+  (from JD) / ❌ does NOT sponsor (with the JD evidence sentence) / ❓ not stated.
+- Results sorted by sponsorship outlook (no-sponsor ranked LAST); numeric score replaced by
+  LLM fit label + reasoning.
+- `parse-description` visa detection rewritten: old `without.*sponsor` / `no.*visa.*sponsor`
+  used unbounded `.*` and matched across the whole JD (e.g. "without hidden fees … sponsorship"),
+  causing false negatives on companies that DO sponsor. Now a 45-char proximity scan.
+
+Verified breakdown after fix: **4 sponsor · 48 unknown · 2 will NOT sponsor** (prior buggy
+run mislabeled 17 as no-sponsor). Positive evidence example captured:
+`"Visa sponsorship: We provide visa sponsorship support … case-by-case"`.
+
+> ⚠️ Limitation: the "✅ files PERM" verdict from DOL enrichment is still ~0 because the
+> company→legal-entity name match (deferred #3) isn't done. Today's sponsorship signal comes
+> from JD text (H-1B-level), which is NOT the same as green-card/PERM filing history. To truly
+> serve "find a company that files PERM", #3 is now the priority feature, not a nice-to-have.

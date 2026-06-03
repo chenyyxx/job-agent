@@ -179,10 +179,14 @@ The review stage outputs results formatted for human decision:
 2. ~~Description parsing is 0% effective.~~ **FIXED** — search now maps descriptions
    (Greenhouse `?content=true` decoded to text, Ashby/Lever `descriptionPlain`). Verified
    run: 152/152 jobs have descriptions → 41 YOE, 53 visa, 3 salary signals.
-3. **Enrich PERM match rate is 0.5%** (DEFERRED). Display name (`1Password`) ≠ DOL legal
-   entity (`AgileBits Inc`). Fuzzy match won't bridge this (no string overlap) — needs a
-   curated alias map or external brand→entity lookup. Low ROI for seed-stage startups that
-   file no PERM anyway. Deferred.
+3. **Enrich PERM match rate is 0.5%** (NOW THE PRIORITY). Display name (`1Password`) ≠ DOL
+   legal entity (`AgileBits Inc`). This is the central feature for the candidate's actual goal
+   (a company that *files PERM* = green card), not a nice-to-have. JD-text sponsorship signal
+   (H-1B-level) is a weaker proxy. Needs a curated alias map or external brand→entity lookup.
+
+Review is organized around the green-card/PERM outlook: each job shows a VISA/PERM verdict
+(files PERM / sponsors / does-not / unknown) with evidence, sorted so no-sponsor ranks last;
+numeric score replaced by LLM fit label + reasoning.
 
 LLM Pass 2 verified working on Bedrock `us.anthropic.claude-haiku-4-5-20251001-v1:0`
 (us-west-2): 50/50 jobs scored (12 STRONG / 27 MATCH). Note: current Anthropic models
