@@ -107,6 +107,29 @@ function createAdapter(config: LLMConfig): LLMAdapter {
   return createHttpAdapter(config);
 }
 
+// Generic single-prompt Bedrock text call (reused by the PERM brand→entity resolver).
+export async function bedrockText(prompt: string, config: LLMConfig): Promise<string> {
+  const { execSync } = await import("child_process");
+  const { tmpdir } = await import("os");
+  const { writeFileSync, readFileSync, unlinkSync } = await import("fs");
+  const { join } = await import("path");
+  const body = JSON.stringify({
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 1500,
+    messages: [{ role: "user", content: prompt }],
+  });
+  const inF = join(tmpdir(), `bd-in-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+  const outF = join(tmpdir(), `bd-out-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+  writeFileSync(inF, body);
+  try {
+    execSync(`aws bedrock-runtime invoke-model --model-id ${config.model} --content-type application/json --cli-binary-format raw-in-base64-out --body fileb://${inF}${config.region ? ` --region ${config.region}` : ""} ${outF}`, { timeout: 30000, stdio: ["ignore", "ignore", "ignore"] });
+    return JSON.parse(readFileSync(outF, "utf-8")).content?.[0]?.text ?? "";
+  } finally {
+    try { unlinkSync(inF); } catch {}
+    try { unlinkSync(outF); } catch {}
+  }
+}
+
 export function loadLLMConfig(dataDir: string): LLMConfig | null {
   const configPath = resolve(dataDir, "../config.json");
   if (!existsSync(configPath)) return null;

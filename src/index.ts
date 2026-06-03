@@ -32,6 +32,7 @@ async function main() {
         companiesPath: resolve(DATA_DIR, "companies.json"),
         outputPath: resolve(DATA_DIR, "companies-enriched.json"),
         dataDir: DATA_DIR,
+        resolvePerm: hasFlag("--resolve-perm"),
       });
       break;
 
@@ -113,6 +114,7 @@ async function main() {
         requireH1b: hasFlag("--require-h1b"),
         excludeNoH1b: hasFlag("--exclude-no-h1b"),
         requirePerm: hasFlag("--require-perm"),
+        minPermFilings: getArg("--min-perm-filings=") ? parseInt(getArg("--min-perm-filings=")!) : undefined,
       });
       break;
     }
@@ -144,6 +146,7 @@ async function main() {
           companiesPath: resolve(DATA_DIR, "companies.json"),
           outputPath: resolve(DATA_DIR, "companies-enriched.json"),
           dataDir: DATA_DIR,
+          resolvePerm: hasFlag("--resolve-perm"),
         });
       }
 
@@ -191,6 +194,7 @@ async function main() {
         requireH1b: hasFlag("--require-h1b"),
         excludeNoH1b: hasFlag("--exclude-no-h1b"),
         requirePerm: hasFlag("--require-perm"),
+        minPermFilings: getArg("--min-perm-filings=") ? parseInt(getArg("--min-perm-filings=")!) : undefined,
       });
 
       console.log("\n═══ Pipeline complete. Review jobs above, then run: job-agent apply ═══");
@@ -202,12 +206,12 @@ async function main() {
 
 Commands:
   discover       Refresh company list from SimplifyJobs
-  enrich         Stamp immigration + layoff data
+  enrich         Stamp immigration + layoff data (--resolve-perm = LLM brand→DOL entity)
   perm-import    Import DOL PERM CSV files → perm-cache.json
   layoff-scrape  Fetch layoffs.fyi data → layoff-cache.json
   search         Query ATS boards (--ats=, --limit= [test only], --locations=, --skip-titles=)
   match          Score + rank jobs (--cv=resume.txt, --skip-llm, --max-yoe=)
-  review         Display top matches (--top=20, --require-h1b, --exclude-no-h1b, --require-perm)
+  review         Display top matches (--top, --require-h1b, --exclude-no-h1b, --require-perm, --min-perm-filings=N)
   apply          Open approved job URLs (--approved=file.json)
   run            Full pipeline (--skip-enrich, --skip-llm, --limit= [test], --locations=, --skip-titles=, --max-yoe=)
 `);

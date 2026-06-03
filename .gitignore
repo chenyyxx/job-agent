@@ -11,3 +11,4 @@ data/layoff-cache.json
 data/perm-*.json
 data/perm_*.csv
 data/perm_*.xlsx
+data/perm-resolve-cache.json

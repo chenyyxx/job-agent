@@ -17,6 +17,7 @@ export interface ReviewOptions {
   requireH1b?: boolean;     // keep only roles whose posting sponsors H-1B
   excludeNoH1b?: boolean;   // drop roles whose posting explicitly will NOT sponsor
   requirePerm?: boolean;    // keep only companies with DOL PERM filing history
+  minPermFilings?: number;  // keep only companies filing >= N PERM cases/qtr (startup filter)
 }
 
 // Visa sponsorship (H-1B work visa) — from the JOB POSTING text. Display only, not ranked.
@@ -59,6 +60,7 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
   if (opts.requireH1b) ranked = ranked.filter(r => r.j.parsed?.visa_sponsorship === true);
   if (opts.excludeNoH1b) ranked = ranked.filter(r => r.j.parsed?.visa_sponsorship !== false);
   if (opts.requirePerm) ranked = ranked.filter(r => r.filings > 0);
+  if (opts.minPermFilings) ranked = ranked.filter(r => r.filings >= opts.minPermFilings!);
 
   const display = ranked.slice(0, opts.top ?? 20);
 

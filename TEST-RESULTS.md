@@ -150,3 +150,14 @@ run mislabeled 17 as no-sponsor). Positive evidence example captured:
 > company→legal-entity name match (deferred #3) isn't done. Today's sponsorship signal comes
 > from JD text (H-1B-level), which is NOT the same as green-card/PERM filing history. To truly
 > serve "find a company that files PERM", #3 is now the priority feature, not a nice-to-have.
+
+## #3 PERM matching — BUILT ✅ (2026-06-03 evening)
+
+- **Normalized matching**: strip legal suffixes/punctuation → 5 → **157/974** matched
+  (Confluent 40, Plaid 16, Patreon 7, Stripe 118…). Aggregates legal entities per brand key.
+- **`--resolve-perm` (grounded LLM)**: guess DOL legal entity for unmatched brands, VERIFY
+  against real DOL index → **178/974**, cached in `perm-resolve-cache.json`. Hallucination-safe
+  (`1Password`→`AgileBits Inc` guessed but correctly no-match since AgileBits not in DOL).
+- **`--min-perm-filings N`**: startup filter. Demo: default shortlist → `--min-perm-filings=1`
+  drops Persona/Orb/AcuityMD (startups, ❓), keeps Temporal(~1)/Flexport(~4)/Redwood(~5)/Divergent(~4).
+  PERM line now real in review output.

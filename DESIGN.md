@@ -179,10 +179,12 @@ The review stage outputs results formatted for human decision:
 2. ~~Description parsing is 0% effective.~~ **FIXED** — search now maps descriptions
    (Greenhouse `?content=true` decoded to text, Ashby/Lever `descriptionPlain`). Verified
    run: 152/152 jobs have descriptions → 41 YOE, 53 visa, 3 salary signals.
-3. **Enrich PERM match rate is 0.5%** (NOW THE PRIORITY). Display name (`1Password`) ≠ DOL
-   legal entity (`AgileBits Inc`). This is the central feature for the candidate's actual goal
-   (a company that *files PERM* = green card), not a nice-to-have. JD-text sponsorship signal
-   (H-1B-level) is a weaker proxy. Needs a curated alias map or external brand→entity lookup.
+3. **Enrich PERM matching — BUILT.** Normalized matching (strip legal suffixes:
+   `Stripe`↔`Stripe, Inc.`) lifts match rate 5→157/974. Optional `--resolve-perm` adds a
+   grounded LLM step: guess the DOL legal entity for unmatched brands (`Notion`→`Notion Labs Inc`),
+   then VERIFY against the real DOL index (hallucinated names just don't match) → 178/974, cached
+   in `perm-resolve-cache.json`. `--min-perm-filings N` filters to companies filing ≥N PERM
+   cases/qtr — doubles as a "no startups" filter (startups don't appear in DOL data).
 
 Review is organized around the green-card/PERM outlook: each job shows a VISA/PERM verdict
 (files PERM / sponsors / does-not / unknown) with evidence, sorted so no-sponsor ranks last;
