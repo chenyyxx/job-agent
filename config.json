@@ -1,0 +1,20 @@
+{
+  "search": {
+    "query": "senior software engineer",
+    "locations": ["San Francisco", "Remote"],
+    "ats_filter": ["greenhouse", "lever", "ashby"]
+  },
+  "match": {
+    "min_keyword_score": 5
+  },
+  "llm_match": {
+    "enabled": false,
+    "provider": "bedrock",
+    "model": "anthropic.claude-3-haiku-20240307-v1:0",
+    "region": "us-west-2",
+    "max_concurrent": 5,
+    "max_cost_per_run": 2.00
+  },
+  "cv_path": "./resume.txt",
+  "data_dir": "./data"
+}
