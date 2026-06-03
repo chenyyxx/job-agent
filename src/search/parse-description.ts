@@ -66,34 +66,42 @@ function parseYoe(text: string): ParsedFields["yoe"] | undefined {
   return undefined;
 }
 
-// Clearance/citizenship/visa patterns
+// Clearance/citizenship patterns
 const CLEARANCE_PATTERNS = /(?:security clearance|ts\/sci|top secret|secret clearance|dod clearance)/i;
 const CITIZENSHIP_PATTERNS = /(?:us citizen(?:ship)?|united states citizen|permanent resident required|must be a? ?u\.?s\.? (?:citizen|person))/i;
-const VISA_POSITIVE = /(?:visa sponsor(?:ship)?|will sponsor|immigration sponsor|h-?1b sponsor)/i;
-const VISA_NEGATIVE = /(?:not? (?:sponsor|provide)|unable to sponsor|cannot sponsor|without.*sponsor|no.*visa.*sponsor)/i;
+
+// Visa sponsorship: scan a SMALL window before each "sponsor" mention. Unbounded `.*`
+// patterns produce false negatives (e.g. "without hidden fees ... sponsorship").
+const NEG_NEAR = /\b(?:not|unable|cannot|can'?t|won'?t|will not|do(?:es)? not|don'?t|without|no)\b/;
+const POS_NEAR = /\b(?:able to|eligible|offer|offers|provide|provides|will|can|do)\b/;
 
 function snippet(text: string, idx: number, match: string): string {
-  const start = Math.max(0, idx - 70);
-  const end = Math.min(text.length, idx + match.length + 70);
+  const start = Math.max(0, idx - 60);
+  const end = Math.min(text.length, idx + match.length + 60);
   return (start > 0 ? "…" : "") + text.slice(start, end).replace(/\s+/g, " ").trim() + (end < text.length ? "…" : "");
 }
 
 function parseVisaClearance(text: string): Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship" | "visa_evidence"> {
   const result: Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship" | "visa_evidence"> = {};
-
   if (CLEARANCE_PATTERNS.test(text)) result.clearance_required = true;
   if (CITIZENSHIP_PATTERNS.test(text)) result.citizenship_required = true;
 
-  const neg = VISA_NEGATIVE.exec(text);
-  const pos = VISA_POSITIVE.exec(text);
-  if (neg) {
-    result.visa_sponsorship = false;
-    result.visa_evidence = snippet(text, neg.index, neg[0]);
-  } else if (pos) {
-    result.visa_sponsorship = true;
-    result.visa_evidence = snippet(text, pos.index, pos[0]);
+  const lc = text.toLowerCase();
+  const re = /sponsor/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(lc))) {
+    const start = Math.max(0, m.index - 45);
+    const win = lc.slice(start, m.index + 12);
+    if (NEG_NEAR.test(win) && !/able to (?:offer|provide)/.test(win)) {
+      result.visa_sponsorship = false;          // explicit negation wins
+      result.visa_evidence = snippet(text, m.index, "sponsor");
+      return result;
+    }
+    if (result.visa_sponsorship === undefined && (POS_NEAR.test(win) || /visa\s*$/.test(win.slice(0, win.length - 7)))) {
+      result.visa_sponsorship = true;
+      result.visa_evidence = snippet(text, m.index, "sponsor");
+    }
   }
-
   return result;
 }
 
