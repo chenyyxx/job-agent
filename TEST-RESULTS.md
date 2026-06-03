@@ -134,7 +134,7 @@ The visa-sponsorship signal now surfaces in results (key for the candidate's sit
 
 Review reorganized around the candidate's real goal — **a company that can file PERM /
 sponsor a green card** — not a numeric score:
-- Each entry leads with a VISA/PERM verdict: ✅ files PERM (from DOL enrichment) / ✅ sponsors
+- Each role shows TWO distinct verdicts: H-1B (work visa, from posting + JD evidence) and PERM/green card (from DOL filing history). Visa sponsorship != PERM.
   (from JD) / ❌ does NOT sponsor (with the JD evidence sentence) / ❓ not stated.
 - Results sorted by sponsorship outlook (no-sponsor ranked LAST); numeric score replaced by
   LLM fit label + reasoning.

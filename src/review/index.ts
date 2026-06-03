@@ -10,25 +10,24 @@ export interface ReviewOptions {
   top?: number;
 }
 
-// Sponsorship/PERM outlook is the PRIMARY axis. tier 0 = best (can sponsor/files PERM),
-// tier 1 = unknown (not stated), tier 2 = worst (explicitly will not sponsor).
-function sponsorship(j: MatchedJob, permFilings: number): { tier: number; verdict: string; evidence?: string } {
-  if (j.parsed?.visa_sponsorship === false) {
-    return { tier: 2, verdict: "❌ Does NOT sponsor", evidence: j.parsed.visa_evidence };
-  }
-  if (permFilings > 0) {
-    return { tier: 0, verdict: `✅ Files PERM — ~${permFilings}/qtr (green-card capable)` };
-  }
-  if (j.parsed?.visa_sponsorship === true) {
-    return { tier: 0, verdict: "✅ Sponsors visas", evidence: j.parsed.visa_evidence };
-  }
-  return { tier: 1, verdict: "❓ Sponsorship not stated in posting" };
+// Visa sponsorship (H-1B work visa) — comes from the JOB POSTING text.
+function h1b(j: MatchedJob): { label: string; evidence?: string; adj: number } {
+  if (j.parsed?.visa_sponsorship === false) return { label: "❌ No H-1B sponsorship (per posting)", evidence: j.parsed.visa_evidence, adj: -15 };
+  if (j.parsed?.visa_sponsorship === true) return { label: "✅ Sponsors H-1B (per posting)", evidence: j.parsed.visa_evidence, adj: 5 };
+  return { label: "❓ H-1B not stated in posting", adj: 0 };
+}
+
+// PERM (green card) — comes from DOL ETA-9089 disclosure filing history. NOT the same as H-1B.
+function perm(filings: number): { label: string; adj: number } {
+  return filings > 0
+    ? { label: `✅ Files PERM / green card — DOL: ~${filings} filings/qtr`, adj: 15 }
+    : { label: "❓ No DOL PERM filing record (green-card outlook unknown)", adj: 0 };
 }
 
 export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
   const jobs: MatchedJob[] = JSON.parse(readFileSync(opts.matchedPath, "utf-8"));
 
-  // PERM filing history per company (DOL enrichment) — the strongest green-card signal.
+  // PERM (green-card) filing history per company — DOL enrichment, keyed by company.
   const enrichedPath = resolve(dirname(opts.matchedPath), "companies-enriched.json");
   const permByCompany = new Map<string, number>();
   if (existsSync(enrichedPath)) {
@@ -37,52 +36,45 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
     }
   }
 
-  // Blended ranking: fit is primary; sponsorship is a soft adjustment (not a hard gate).
-  const fit = (d: { j: MatchedJob }) => d.j.llm_match?.score ?? d.j.keyword_score ?? 0;
-  const adj = (tier: number) => (tier === 0 ? 10 : tier === 2 ? -20 : 0);
-  const rank = (d: { j: MatchedJob; s: { tier: number } }) => fit(d) + adj(d.s.tier);
-
+  // Blended ranking: fit is primary; H-1B (JD) and PERM (DOL) are separate soft adjustments.
+  const fit = (j: MatchedJob) => j.llm_match?.score ?? j.keyword_score ?? 0;
   const ranked = jobs
-    .map((j, idx) => ({ j, idx, s: sponsorship(j, permByCompany.get(j.company.toLowerCase()) ?? 0) }))
-    .sort((a, b) => rank(b) - rank(a) || a.idx - b.idx);
+    .map((j, idx) => {
+      const filings = permByCompany.get(j.company.toLowerCase()) ?? 0;
+      const h = h1b(j);
+      const p = perm(filings);
+      return { j, idx, h, p, filings, score: fit(j) + h.adj + p.adj };
+    })
+    .sort((a, b) => b.score - a.score || a.idx - b.idx);
 
   const display = ranked.slice(0, opts.top ?? 20);
 
-  // Group displayed jobs by company; company outlook = best across its roles.
-  const groups = new Map<string, { jobs: typeof display; perm: number }>();
+  // Group displayed roles by company (PERM is a company-level signal).
+  const groups = new Map<string, typeof display>();
   for (const d of display) {
-    const g = groups.get(d.j.company) ?? { jobs: [], perm: permByCompany.get(d.j.company.toLowerCase()) ?? 0 };
-    g.jobs.push(d);
+    const g = groups.get(d.j.company) ?? [];
+    g.push(d);
     groups.set(d.j.company, g);
   }
   const companies = [...groups.entries()]
-    .map(([name, g]) => {
-      const anyYes = g.jobs.some(d => d.j.parsed?.visa_sponsorship === true);
-      const anyNo = g.jobs.some(d => d.j.parsed?.visa_sponsorship === false);
-      const tier = (g.perm > 0 || anyYes) ? 0 : anyNo ? 2 : 1;
-      const verdict = g.perm > 0 ? `✅ Files PERM — ~${g.perm}/qtr (green-card capable)`
-        : anyYes ? "✅ Sponsors visas (per posting)"
-        : anyNo ? "❌ Some postings say NO sponsorship"
-        : "❓ Sponsorship not stated";
-      const best = Math.max(...g.jobs.map(d => rank(d)));
-      return { name, g, tier, verdict, best };
-    })
+    .map(([name, roles]) => ({ name, roles, best: Math.max(...roles.map(d => d.score)) }))
     .sort((a, b) => b.best - a.best);
 
   console.log(`\n${"═".repeat(64)}`);
-  console.log(`  JOB REVIEW — ${companies.length} companies, ${display.length} of ${jobs.length} roles, by fit (sponsorship-adjusted)`);
+  console.log(`  JOB REVIEW — ${companies.length} companies, ${display.length} of ${jobs.length} roles (fit-ranked)`);
+  console.log(`  H-1B = work visa (from posting) · PERM = green card (from DOL filings)`);
   console.log(`${"═".repeat(64)}\n`);
 
   for (const c of companies) {
-    console.log(`▸ ${c.name}   ${c.verdict}   (${c.g.jobs.length} role${c.g.jobs.length > 1 ? "s" : ""})`);
-    for (const { j, s } of c.g.jobs) {
-      const fit = j.llm_match?.recommendation?.replace("_", " ") ?? "keyword fit";
+    console.log(`▸ ${c.name}   (${c.roles.length} role${c.roles.length > 1 ? "s" : ""})`);
+    console.log(`    Green card (PERM): ${c.roles[0].p.label}`);
+    for (const { j, h } of c.roles) {
+      const fitLabel = j.llm_match?.recommendation?.replace("_", " ") ?? "keyword fit";
       const pay = j.parsed?.salary ? `$${j.parsed.salary.min / 1000 | 0}k–${j.parsed.salary.max / 1000 | 0}k` : "pay n/a";
       const yoe = j.parsed?.yoe ? `${j.parsed.yoe.min}${j.parsed.yoe.max ? `–${j.parsed.yoe.max}` : "+"}y` : "yoe n/a";
-      const flag = j.parsed?.visa_sponsorship === false ? " ⚠️NO-sponsor" : "";
-      console.log(`    • ${j.title.trim()}  [${fit}${flag}]`);
-      console.log(`        ${j.location} · ${pay} · ${yoe}`);
-      if (s.evidence) console.log(`        visa evidence: "${s.evidence}"`);
+      console.log(`    • ${j.title.trim()}  [${fitLabel}]`);
+      console.log(`        ${j.location} · ${pay} · ${yoe} · H-1B: ${h.label}`);
+      if (h.evidence) console.log(`        H-1B evidence: "${h.evidence}"`);
       if (j.llm_match?.reasoning) console.log(`        ${j.llm_match.reasoning}`);
       console.log(`        → ${j.url}`);
     }
@@ -90,10 +82,11 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
   }
 
   console.log(`${"─".repeat(64)}`);
-  console.log(`  Sponsorship: ${ranked.filter(r => r.s.tier === 0).length} can sponsor/file PERM · ${ranked.filter(r => r.s.tier === 1).length} unknown · ${ranked.filter(r => r.s.tier === 2).length} will NOT sponsor (down-weighted, not removed).`);
+  console.log(`  PERM/green card (DOL): ${ranked.filter(r => r.filings > 0).length} companies file PERM · ${ranked.filter(r => r.filings === 0).length} no DOL record`);
+  console.log(`  H-1B (posting): ${ranked.filter(r => r.j.parsed?.visa_sponsorship === true).length} sponsor · ${ranked.filter(r => r.j.parsed?.visa_sponsorship === false).length} do NOT · rest unstated`);
   console.log(`  Apply: open URLs above, or 'job-agent apply --approved <file>'. No auto-apply.\n`);
 
-  const out = display.map(d => ({ ...d.j, sponsorship: d.s }));
+  const out = display.map(d => ({ ...d.j, h1b: d.h, perm: d.p }));
   writeFileSync(opts.outputPath, JSON.stringify(out, null, 2));
   return display.map(d => d.j);
 }
