@@ -105,7 +105,7 @@ async function searchAshby(company: Company, query: string): Promise<Job[]> {
 
   return (data.jobs ?? [])
     .filter((j: any) => {
-      const blob = `${j.title ?? ""} ${j.location ?? ""} ${j.departmentName ?? ""}`.toLowerCase();
+      const blob = `${j.title ?? ""} ${j.location ?? ""} ${j.department ?? ""}`.toLowerCase();
       return blob.includes(kw);
     })
     .map((j: any) => ({
@@ -114,7 +114,7 @@ async function searchAshby(company: Company, query: string): Promise<Job[]> {
       title: j.title ?? "",
       location: j.location ?? "",
       url: j.jobUrl ?? `https://jobs.ashbyhq.com/${company.slug}/${j.id}`,
-      department: j.departmentName ?? "",
+      department: j.department ?? "",
       posted_at: j.publishedDate ?? "",
       description: j.descriptionPlain ?? undefined,
     }));
