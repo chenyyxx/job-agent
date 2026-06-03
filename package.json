@@ -1,0 +1,23 @@
+{
+  "name": "job-agent",
+  "version": "0.1.0",
+  "description": "Job search orchestrator with pluggable tools",
+  "type": "module",
+  "bin": {
+    "job-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node --loader ts-node/esm src/index.ts",
+    "discover": "node --loader ts-node/esm src/index.ts discover",
+    "search": "node --loader ts-node/esm src/index.ts search",
+    "enrich": "node --loader ts-node/esm src/index.ts enrich",
+    "match": "node --loader ts-node/esm src/index.ts match"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.4.0"
+  }
+}

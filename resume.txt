@@ -1,0 +1,4 @@
+Senior Software Engineer with 4 years experience in distributed systems.
+Skills: TypeScript, Python, Java, Kubernetes, AWS, React, Node.js, GraphQL.
+Experience: backend services, observability, tracing, microservices.
+Location preference: San Francisco, Remote.
