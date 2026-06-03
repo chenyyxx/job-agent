@@ -37,10 +37,14 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
     }
   }
 
-  // Rank by sponsorship outlook first, then by fit (existing order preserved within tier).
+  // Blended ranking: fit is primary; sponsorship is a soft adjustment (not a hard gate).
+  const fit = (d: { j: MatchedJob }) => d.j.llm_match?.score ?? d.j.keyword_score ?? 0;
+  const adj = (tier: number) => (tier === 0 ? 10 : tier === 2 ? -20 : 0);
+  const rank = (d: { j: MatchedJob; s: { tier: number } }) => fit(d) + adj(d.s.tier);
+
   const ranked = jobs
     .map((j, idx) => ({ j, idx, s: sponsorship(j, permByCompany.get(j.company.toLowerCase()) ?? 0) }))
-    .sort((a, b) => a.s.tier - b.s.tier || a.idx - b.idx);
+    .sort((a, b) => rank(b) - rank(a) || a.idx - b.idx);
 
   const display = ranked.slice(0, opts.top ?? 20);
 
@@ -60,12 +64,13 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
         : anyYes ? "✅ Sponsors visas (per posting)"
         : anyNo ? "❌ Some postings say NO sponsorship"
         : "❓ Sponsorship not stated";
-      return { name, g, tier, verdict };
+      const best = Math.max(...g.jobs.map(d => rank(d)));
+      return { name, g, tier, verdict, best };
     })
-    .sort((a, b) => a.tier - b.tier || b.g.jobs.length - a.g.jobs.length);
+    .sort((a, b) => b.best - a.best);
 
   console.log(`\n${"═".repeat(64)}`);
-  console.log(`  JOB REVIEW — ${companies.length} companies, ${display.length} of ${jobs.length} roles, by green-card/PERM outlook`);
+  console.log(`  JOB REVIEW — ${companies.length} companies, ${display.length} of ${jobs.length} roles, by fit (sponsorship-adjusted)`);
   console.log(`${"═".repeat(64)}\n`);
 
   for (const c of companies) {
@@ -85,7 +90,7 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
   }
 
   console.log(`${"─".repeat(64)}`);
-  console.log(`  Sponsorship: ${ranked.filter(r => r.s.tier === 0).length} can sponsor/file PERM · ${ranked.filter(r => r.s.tier === 1).length} unknown · ${ranked.filter(r => r.s.tier === 2).length} will NOT sponsor (ranked last).`);
+  console.log(`  Sponsorship: ${ranked.filter(r => r.s.tier === 0).length} can sponsor/file PERM · ${ranked.filter(r => r.s.tier === 1).length} unknown · ${ranked.filter(r => r.s.tier === 2).length} will NOT sponsor (down-weighted, not removed).`);
   console.log(`  Apply: open URLs above, or 'job-agent apply --approved <file>'. No auto-apply.\n`);
 
   const out = display.map(d => ({ ...d.j, sponsorship: d.s }));
