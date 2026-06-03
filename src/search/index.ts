@@ -19,6 +19,7 @@ export interface Job {
     clearance_required?: boolean;
     citizenship_required?: boolean;
     visa_sponsorship?: boolean;
+    visa_evidence?: string;
   };
 }
 

@@ -9,6 +9,7 @@ interface ParsedFields {
   clearance_required?: boolean;
   citizenship_required?: boolean;
   visa_sponsorship?: boolean;
+  visa_evidence?: string;
 }
 
 // Salary patterns: "$120,000 - $180,000", "$120K-$180K", "$120k to $180k per year"
@@ -71,13 +72,27 @@ const CITIZENSHIP_PATTERNS = /(?:us citizen(?:ship)?|united states citizen|perma
 const VISA_POSITIVE = /(?:visa sponsor(?:ship)?|will sponsor|immigration sponsor|h-?1b sponsor)/i;
 const VISA_NEGATIVE = /(?:not? (?:sponsor|provide)|unable to sponsor|cannot sponsor|without.*sponsor|no.*visa.*sponsor)/i;
 
-function parseVisaClearance(text: string): Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship"> {
-  const result: Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship"> = {};
+function snippet(text: string, idx: number, match: string): string {
+  const start = Math.max(0, idx - 70);
+  const end = Math.min(text.length, idx + match.length + 70);
+  return (start > 0 ? "…" : "") + text.slice(start, end).replace(/\s+/g, " ").trim() + (end < text.length ? "…" : "");
+}
+
+function parseVisaClearance(text: string): Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship" | "visa_evidence"> {
+  const result: Pick<ParsedFields, "clearance_required" | "citizenship_required" | "visa_sponsorship" | "visa_evidence"> = {};
 
   if (CLEARANCE_PATTERNS.test(text)) result.clearance_required = true;
   if (CITIZENSHIP_PATTERNS.test(text)) result.citizenship_required = true;
-  if (VISA_NEGATIVE.test(text)) result.visa_sponsorship = false;
-  else if (VISA_POSITIVE.test(text)) result.visa_sponsorship = true;
+
+  const neg = VISA_NEGATIVE.exec(text);
+  const pos = VISA_POSITIVE.exec(text);
+  if (neg) {
+    result.visa_sponsorship = false;
+    result.visa_evidence = snippet(text, neg.index, neg[0]);
+  } else if (pos) {
+    result.visa_sponsorship = true;
+    result.visa_evidence = snippet(text, pos.index, pos[0]);
+  }
 
   return result;
 }
@@ -88,7 +103,7 @@ export function parseDescription(job: Job): Job {
 
   const salary = parseSalary(text);
   const yoe = parseYoe(text);
-  const { clearance_required, citizenship_required, visa_sponsorship } = parseVisaClearance(text);
+  const { clearance_required, citizenship_required, visa_sponsorship, visa_evidence } = parseVisaClearance(text);
 
   const parsed: ParsedFields = {
     ...(salary && { salary }),
@@ -96,6 +111,7 @@ export function parseDescription(job: Job): Job {
     ...(clearance_required !== undefined && { clearance_required }),
     ...(citizenship_required !== undefined && { citizenship_required }),
     ...(visa_sponsorship !== undefined && { visa_sponsorship }),
+    ...(visa_evidence && { visa_evidence }),
   };
 
   if (Object.keys(parsed).length === 0) return job;
