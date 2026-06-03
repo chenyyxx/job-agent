@@ -1,8 +1,10 @@
 # job-agent Design Document
 
-> Created: 2026-06-03 · Last updated: 2026-06-03
-> Status: All 5 stages implemented and chaining (commit 6002504). Pipeline runs e2e (exit 0).
-> Apply is a display-only stub by design. See TEST-RESULTS.md for the latest e2e run and known gaps.
+> Created: 2026-06-03 · Last updated: 2026-06-03 (evening)
+> Status: Working end-to-end. Discover→Enrich(+PERM resolve)→Search(+filters)→Match(+LLM)→Review→Apply.
+> CLI flags: search `--perm-only --locations --skip-titles --limit`; enrich `--resolve-perm`;
+> match `--max-yoe --skip-llm`; review `--require-h1b --exclude-no-h1b --min-perm-filings=N`.
+> Apply is a display-only stub. Biggest gap: Workday ATS coverage (see Known Limitations).
 
 ## Overview
 
@@ -173,6 +175,12 @@ The review stage outputs results formatted for human decision:
 ```
 
 ## Known Limitations (updated 2026-06-03 evening)
+
+0. **ATS discovery coverage (Workday) — biggest gap.** `companies.json` is seeded only from
+   SimplifyJobs (Greenhouse/Lever/Ashby). The largest PERM filers / best green-card targets —
+   Microsoft (~1861/qtr), Apple (629), NVIDIA (595), Amazon, Google, Meta, TikTok (137) — use
+   Workday (or Feishu for TikTok) and are absent from the search universe. We have their DOL PERM
+   data but can't reach their postings. A Workday adapter is the highest-value next step.
 
 1. ~~Search covers only an alphabetical slice.~~ **FIXED** — `--limit` is now a test-only
    knob that *randomly samples* N companies; real runs pass no limit and search all 974.
