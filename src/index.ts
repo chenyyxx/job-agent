@@ -66,6 +66,7 @@ async function main() {
         limit,
         locations: getArg("--locations=")?.split(","),
         skipTitles: getArg("--skip-titles=")?.split(","),
+        permOnly: hasFlag("--perm-only"),
       });
       // Auto-parse descriptions if any have description text
       if (jobs.some(j => j.description)) {
@@ -158,6 +159,7 @@ async function main() {
         limit,
         locations,
         skipTitles,
+        permOnly: hasFlag("--perm-only"),
       });
       if (jobs.some(j => j.description)) {
         const { jobs: parsed, stats } = parseDescriptions(jobs);
@@ -209,11 +211,11 @@ Commands:
   enrich         Stamp immigration + layoff data (--resolve-perm = LLM brand→DOL entity)
   perm-import    Import DOL PERM CSV files → perm-cache.json
   layoff-scrape  Fetch layoffs.fyi data → layoff-cache.json
-  search         Query ATS boards (--ats=, --limit= [test only], --locations=, --skip-titles=)
+  search         Query ATS boards (--ats=, --limit= [test], --locations=, --skip-titles=, --perm-only)
   match          Score + rank jobs (--cv=resume.txt, --skip-llm, --max-yoe=)
   review         Display top matches (--top, --require-h1b, --exclude-no-h1b, --require-perm, --min-perm-filings=N)
   apply          Open approved job URLs (--approved=file.json)
-  run            Full pipeline (--skip-enrich, --skip-llm, --limit= [test], --locations=, --skip-titles=, --max-yoe=)
+  run            Full pipeline (--locations=, --skip-titles=, --max-yoe=, --resolve-perm, --perm-only, --min-perm-filings=N, --limit=[test])
 `);
   }
 }

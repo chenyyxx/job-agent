@@ -1,7 +1,8 @@
 // Search module: query ATS boards for matching jobs
 // Config-driven — accepts {ats, slug} from companies.json, no per-company files
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve, dirname } from "path";
 import type { Company } from "../discovery/index.js";
 
 export interface Job {
@@ -31,6 +32,7 @@ export interface SearchOptions {
   limit?: number;
   locations?: string[];
   skipTitles?: string[];
+  permOnly?: boolean;   // search only companies with DOL PERM filings (from enriched data)
 }
 
 // --- ATS Clients ---
@@ -135,6 +137,24 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
   let filtered = companies;
   if (opts.atsFilter?.length) {
     filtered = companies.filter(c => opts.atsFilter!.includes(c.ats));
+  }
+
+  // --perm-only: restrict to companies with DOL PERM filings (green-card capable), so the
+  // sample only ever hits filers. Requires enrich to have run.
+  if (opts.permOnly) {
+    const enrichedPath = resolve(dirname(opts.companiesPath), "companies-enriched.json");
+    if (existsSync(enrichedPath)) {
+      const filers = new Set(
+        (JSON.parse(readFileSync(enrichedPath, "utf-8")) as any[])
+          .filter(c => (c.immigration?.filings_quarterly ?? 0) > 0)
+          .map(c => c.name.toLowerCase())
+      );
+      const before = filtered.length;
+      filtered = filtered.filter(c => filers.has(c.name.toLowerCase()));
+      console.log(`  PERM-only: ${before} → ${filtered.length} companies (file PERM)`);
+    } else {
+      console.log("  ⚠ --perm-only needs companies-enriched.json — run enrich first");
+    }
   }
 
   // `limit` is a TEST knob only: randomly sample N companies (so we hit a mix incl.
