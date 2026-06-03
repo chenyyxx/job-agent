@@ -28,10 +28,10 @@ function parsePermCsv(content: string): PermRow[] {
   const lines = content.split("\n");
   const header = lines[0].split(",").map(h => h.replace(/"/g, "").trim().toUpperCase());
 
-  const iEmployer = header.findIndex(h => h.includes("EMPLOYER_NAME"));
+  const iEmployer = header.findIndex(h => h.includes("EMPLOYER_NAME") || h.includes("EMP_BUSINESS_NAME"));
   const iStatus = header.findIndex(h => h.includes("CASE_STATUS"));
-  const iTitle = header.findIndex(h => h.includes("JOB_TITLE"));
-  const iWage = header.findIndex(h => h.includes("WAGE_OFFER_FROM"));
+  const iTitle = header.findIndex(h => h.includes("JOB_TITLE") || h.includes("OCCUPATION_TYPE"));
+  const iWage = header.findIndex(h => h.includes("WAGE_OFFER_FROM") || h.includes("OFFERED_WAGE_FROM") || h === "JOB_OPP_WAGE_FROM");
   const iDate = header.findIndex(h => h.includes("DECISION_DATE"));
 
   if (iEmployer < 0 || iStatus < 0) {

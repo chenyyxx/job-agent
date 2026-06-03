@@ -37,8 +37,17 @@ const HEADERS = {
   Accept: "application/json",
 };
 
+// Greenhouse `content` is HTML-entity-escaped HTML; decode + strip to plain text for parsing.
+function htmlToText(s: string): string {
+  return s
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+    .replace(/&#39;|&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, " ")
+    .replace(/&#8211;|&#x2013;/g, "–").replace(/&#8217;|&#x2019;/g, "'")
+    .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function searchGreenhouse(company: Company, query: string): Promise<Job[]> {
-  const url = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(company.slug)}/jobs`;
+  const url = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(company.slug)}/jobs?content=true`;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) return [];
   const data = await res.json() as { jobs?: any[] };
@@ -57,6 +66,7 @@ async function searchGreenhouse(company: Company, query: string): Promise<Job[]>
       url: j.absolute_url ?? `https://boards.greenhouse.io/${company.slug}/jobs/${j.id}`,
       department: j.departments?.[0]?.name ?? "",
       posted_at: j.updated_at ?? "",
+      description: j.content ? htmlToText(j.content) : undefined,
     }));
 }
 
@@ -80,6 +90,7 @@ async function searchLever(company: Company, query: string): Promise<Job[]> {
       url: j.hostedUrl ?? j.applyUrl ?? "",
       department: j.categories?.team ?? "",
       posted_at: j.createdAt ? new Date(j.createdAt).toISOString() : "",
+      description: j.descriptionPlain ?? j.description ?? undefined,
     }));
 }
 
@@ -103,6 +114,7 @@ async function searchAshby(company: Company, query: string): Promise<Job[]> {
       url: j.jobUrl ?? `https://jobs.ashbyhq.com/${company.slug}/${j.id}`,
       department: j.departmentName ?? "",
       posted_at: j.publishedDate ?? "",
+      description: j.descriptionPlain ?? undefined,
     }));
 }
 
@@ -116,15 +128,17 @@ const ATS_CLIENTS: Record<string, (company: Company, query: string) => Promise<J
 
 export async function search(opts: SearchOptions): Promise<Job[]> {
   const companies: Company[] = JSON.parse(readFileSync(opts.companiesPath, "utf-8"));
-  const limit = opts.limit ?? 10;
 
   let filtered = companies;
   if (opts.atsFilter?.length) {
     filtered = companies.filter(c => opts.atsFilter!.includes(c.ats));
   }
 
-  // Limit companies to search (avoid hammering all 974)
-  const toSearch = filtered.slice(0, limit);
+  // `limit` is a TEST knob only: randomly sample N companies (so we hit a mix incl.
+  // big names for PERM testing). Real runs pass no limit → search every company.
+  const toSearch = opts.limit != null
+    ? [...filtered].sort(() => Math.random() - 0.5).slice(0, opts.limit)
+    : filtered;
   console.log(`Searching ${toSearch.length} companies for "${opts.query}"...`);
 
   const allJobs: Job[] = [];

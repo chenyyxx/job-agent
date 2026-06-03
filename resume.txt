@@ -1,4 +1,28 @@
-Senior Software Engineer with 4 years experience in distributed systems.
-Skills: TypeScript, Python, Java, Kubernetes, AWS, React, Node.js, GraphQL.
-Experience: backend services, observability, tracing, microservices.
-Location preference: San Francisco, Remote.
+Senior Software Development Engineer | 4+ years
+
+Technical Skills:
+- Languages: TypeScript, Java, Python, Go
+- Frontend: React, Cloudscape Design System, Monaco Editor, Webpack
+- Backend: Node.js, GraphQL, REST APIs, microservices architecture
+- Cloud/Infra: AWS (CDK, CloudWatch, Lambda, DynamoDB, ECS, EKS), Kubernetes, Docker
+- Observability: distributed tracing, OpenTelemetry, metrics pipelines, CloudWatch, iGraph
+- Data: OpenSearch, Kinesis, DynamoDB, ClickHouse
+- Tools: Git, CI/CD pipelines, CDK, Terraform
+
+Experience:
+- Built self-service debuglet authoring platform (DSL engine, YAML schema, sandbox execution, AI agent integration)
+- Designed and implemented distributed tracing data pipelines processing billions of spans/day
+- Built client emission monitoring dashboards and alarm systems for data loss detection
+- Developed full-stack web applications with React + TypeScript + AWS backend
+- Created developer tools: code review automation, deployment orchestration, CLI tooling
+- Oncall operations: incident response, SEV2 triage, service health monitoring
+
+Domain Expertise:
+- Distributed systems and microservices
+- Observability and monitoring (traces, metrics, logs)
+- Developer experience and internal tooling
+- Full-stack web development
+- System design and architecture
+
+Location: San Francisco Bay Area, open to Remote (US)
+Visa: Requires H-1B/PERM sponsorship

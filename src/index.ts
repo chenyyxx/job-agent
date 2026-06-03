@@ -55,7 +55,8 @@ async function main() {
     case "search": {
       const query = process.argv.slice(3).find(a => !a.startsWith("--")) ?? "software engineer";
       const atsFlag = getArg("--ats=");
-      const limit = parseInt(getArg("--limit=") ?? "10");
+      const limitArg = getArg("--limit=");
+      const limit = limitArg ? parseInt(limitArg) : undefined;
       const jobs = await search({
         companiesPath: resolve(DATA_DIR, "companies.json"),
         outputPath: resolve(DATA_DIR, "jobs.json"),
@@ -120,7 +121,8 @@ async function main() {
       const query = process.argv.slice(3).find(a => !a.startsWith("--")) ?? "software engineer";
       const skipEnrich = hasFlag("--skip-enrich");
       const skipLlm = hasFlag("--skip-llm");
-      const limit = parseInt(getArg("--limit=") ?? "20");
+      const limitArg = getArg("--limit=");
+      const limit = limitArg ? parseInt(limitArg) : undefined;
 
       console.log("═══ job-agent pipeline ═══\n");
 

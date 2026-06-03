@@ -41,6 +41,9 @@ function createBedrockAdapter(config: LLMConfig): LLMAdapter {
   return {
     async evaluate(cv: string, job: Job): Promise<LLMMatchResult> {
       const { execSync } = await import("child_process");
+      const { tmpdir } = await import("os");
+      const { writeFileSync, readFileSync, unlinkSync } = await import("fs");
+      const { join } = await import("path");
       const body = JSON.stringify({
         anthropic_version: "bedrock-2023-05-31",
         max_tokens: 500,
@@ -48,11 +51,22 @@ function createBedrockAdapter(config: LLMConfig): LLMAdapter {
         messages: [{ role: "user", content: buildPrompt(cv, job) }],
       });
 
-      const cmd = `aws bedrock-runtime invoke-model --model-id ${config.model} --content-type application/json --body '${body.replace(/'/g, "'\\''")}'${config.region ? ` --region ${config.region}` : ""} /dev/stdout 2>/dev/null`;
-      const result = execSync(cmd, { encoding: "utf-8", timeout: 30000 });
-      const parsed = JSON.parse(result);
-      const text = parsed.content?.[0]?.text ?? parsed.completion ?? "";
-      return JSON.parse(text);
+      // Body via temp file (avoids shell-escaping huge JD text); output via temp file
+      // (avoids the CLI appending its {"contentType":...} metadata to stdout).
+      const bodyFile = join(tmpdir(), `bedrock-in-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+      const outFile = join(tmpdir(), `bedrock-out-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+      writeFileSync(bodyFile, body);
+      try {
+        const cmd = `aws bedrock-runtime invoke-model --model-id ${config.model} --content-type application/json --cli-binary-format raw-in-base64-out --body fileb://${bodyFile}${config.region ? ` --region ${config.region}` : ""} ${outFile}`;
+        execSync(cmd, { timeout: 30000, stdio: ["ignore", "ignore", "ignore"] });
+        const parsed = JSON.parse(readFileSync(outFile, "utf-8"));
+        let text = parsed.content?.[0]?.text ?? parsed.completion ?? "";
+        text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+        return JSON.parse(text);
+      } finally {
+        try { unlinkSync(bodyFile); } catch {}
+        try { unlinkSync(outFile); } catch {}
+      }
     },
   };
 }

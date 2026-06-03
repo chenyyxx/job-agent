@@ -1,6 +1,6 @@
 # Test Results — job-agent
 
-> Run: 2026-06-03 11:25 UTC
+> Module tests: 2026-06-03 11:25 · Full e2e: 2026-06-03 19:25 UTC (commit 6002504)
 
 ## Discovery Module ✅
 
@@ -64,11 +64,54 @@ Matching 96 jobs against CV (26 terms extracted)...
     [13] Senior Software Engineer - Financial Products @ Adyen
 ```
 
-## Not Yet Implemented
+## Now Implemented (commit 6002504)
 
-- [ ] Enrich (PERM XLSX parsing + layoff data)
-- [ ] LLM match adapter (Pass 2)
-- [ ] Review (human review gate formatting)
-- [ ] Apply (form fill)
-- [ ] Full pipeline orchestrator (`job-agent run`)
-- [ ] Description parsing (salary/YOE/clearance extraction)
+- [x] Enrich — `perm-import` (DOL PERM → `perm-cache.json`, ~30k employers) + `layoff-scraper`
+- [x] LLM match adapter (Pass 2) — pluggable bedrock/openai/ollama/anthropic; wired into `run`
+- [x] Review — human review gate formatting (top-N with URLs, scores)
+- [x] Apply — display-only stub (opens URLs, never submits)
+- [x] Full pipeline orchestrator (`job-agent run`)
+- [x] Description parsing module (`parse-description.ts`)
+
+## Full Pipeline E2E ✅ (2026-06-03 19:25)
+
+```
+$ job-agent run "software engineer" --skip-llm --limit=20
+  Stage 1 Discover  → 974 companies
+  Stage 2 Enrich    → companies-enriched.json (schema stamped)
+  Stage 3 Search    → 65 jobs from 14 live companies
+  Stage 4 Match     → 65 ranked (top keyword score 9–13)
+  Stage 5 Review    → top-20 printed with direct URLs
+  Exit: 0
+```
+
+`tsc --noEmit`: clean. All 9 CLI commands wired
+(`discover enrich search match review apply run perm-import layoff-scrape`).
+
+## Gaps Found During E2E — status
+
+| Gap | Status |
+|-----|--------|
+| Search = alphabetical slice | ✅ FIXED — `--limit` now random-samples (test-only); no limit = search all 974 |
+| Description parse 0% effective | ✅ FIXED — GH `?content=true`, Ashby/Lever `descriptionPlain`; 152/152 jobs now have text |
+| Enrich PERM match 0.5% | ⏸ DEFERRED — needs alias map / brand→entity lookup; fuzzy won't help |
+| LLM Pass 2 untested | ✅ FIXED — bedrock haiku-4.5 working; see run below |
+
+### Description-fetch verification (2026-06-03 evening)
+```
+$ job-agent run "software engineer" --skip-llm --limit=20
+  Search → 152 jobs from 9 (randomly sampled) companies
+  Parsed: 3 salary, 41 YOE, 53 visa signals   (was 0/0/0)
+```
+
+### LLM Pass 2 verification (2026-06-03 evening)
+```
+$ job-agent match --cv=resume.txt          # bedrock us.anthropic.claude-haiku-4-5
+  LLM Match: evaluating 50 jobs (3 concurrent)
+  LLM results: 12 STRONG, 27 MATCH, 11 other     (50/50 scored)
+  Top: Anthropic Cloud Inference 82 STRONG_MATCH (reasoning flags H-1B blocker)
+```
+Three bugs fixed to get here:
+1. Adapter omitted `--cli-binary-format raw-in-base64-out` (AWS CLI v2 rejects inline body).
+2. `/dev/stdout` output concatenated the CLI's `{"contentType":...}` metadata → `JSON.parse` failed. Now writes to a temp file.
+3. Configured model `claude-3-haiku-20240307` is Legacy/blocked → switched to `us.anthropic.claude-haiku-4-5-20251001-v1:0` (inference profile; on-demand bare IDs no longer available).

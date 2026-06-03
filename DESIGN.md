@@ -1,6 +1,8 @@
 # job-agent Design Document
 
-> Created: 2026-06-03 · Status: Implementation in progress
+> Created: 2026-06-03 · Last updated: 2026-06-03
+> Status: All 5 stages implemented and chaining (commit 6002504). Pipeline runs e2e (exit 0).
+> Apply is a display-only stub by design. See TEST-RESULTS.md for the latest e2e run and known gaps.
 
 ## Overview
 
@@ -27,15 +29,18 @@ External tools (standalone CLIs, minimal changes):
 ## Pipeline
 
 ```
-job-agent run [--skip-llm] [--dry-run]
+job-agent run [query] [--skip-enrich] [--skip-llm] [--limit=N]
 
-  1. Discover  → data/companies.json
-  2. Enrich    → data/companies-enriched.json
-  3. Search    → data/jobs.json
-  4. Match     → data/matched.json
-  5. Review    → human approves/skips (BLOCKING)
-  6. Apply     → submit approved applications
+  1. Discover  → data/companies.json              (974 companies)
+  2. Enrich    → data/companies-enriched.json      (PERM + layoff, skippable)
+  3. Search    → data/jobs.json                    (live ATS, then parse-description)
+  4. Match     → data/matched.json                 (keyword + optional LLM Pass 2)
+  5. Review    → data/review-output.json           (human gate, prints top N)
+  6. Apply     → display-only stub (opens URLs; NEVER submits)
 ```
+
+> Note: `--limit=N` currently caps the **number of companies searched** (alphabetical
+> slice), not the number of jobs returned. See TEST-RESULTS.md known gaps.
 
 Each stage reads previous stage's output. Each is also a standalone command:
 ```bash
@@ -44,7 +49,9 @@ job-agent enrich                            # stamp immigration + layoff
 job-agent search --query "senior SWE"       # search ATS boards
 job-agent match --cv resume.txt             # score + rank
 job-agent review                            # pretty print for human review
-job-agent apply --approved approved.json    # submit (with confirmation)
+job-agent apply --approved approved.json    # open approved URLs (no auto-submit)
+job-agent perm-import <xlsx|csv>            # build data/perm-cache.json from DOL PERM
+job-agent layoff-scrape                     # build data/layoff-cache.json
 ```
 
 ## Data Contracts
@@ -116,14 +123,15 @@ interface MatchedJob extends Job {
 
 ## LLM Match Adapter
 
-Provider-pluggable. User configures in config.json:
+Provider-pluggable (bedrock | openai | ollama | anthropic). Actual config.json:
 ```json
 {
   "llm_match": {
-    "enabled": false,
+    "enabled": true,
     "provider": "bedrock",
-    "model": "claude-haiku",
-    "max_concurrent": 5,
+    "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "region": "us-west-2",
+    "max_concurrent": 3,
     "max_cost_per_run": 2.00
   }
 }
@@ -164,13 +172,30 @@ The review stage outputs results formatted for human decision:
 }
 ```
 
-## Open Questions & Tradeoffs
+## Known Limitations (updated 2026-06-03 evening)
 
-- [ ] **PERM XLSX parsing**: Node xlsx lib vs exceljs (streaming) — file is ~50MB/quarter
-- [ ] **Layoff data source**: WARN Act (government, clean) vs layoffs.fyi Airtable (hacky but richer)
-- [ ] **Lever/Ashby rate limits**: Unknown — may need request throttling
-- [ ] **Companies that change ATS**: SimplifyJobs refresh catches this; old slug becomes stale (0 jobs)
-- [ ] **companies.json git-tracked?**: Yes (seed data), but `companies-enriched.json` gitignored (generated)
-- [ ] **Description parsing accuracy**: Regex for salary/YOE/clearance is ~80% — good enough for filtering, not for decisions
-- [ ] **sponsor-check as separate repo vs built-in module**: Start built-in, extract later if it grows
-- [ ] **Search concurrency**: Too many parallel ATS requests = rate limiting. Default: 5 concurrent.
+1. ~~Search covers only an alphabetical slice.~~ **FIXED** — `--limit` is now a test-only
+   knob that *randomly samples* N companies; real runs pass no limit and search all 974.
+2. ~~Description parsing is 0% effective.~~ **FIXED** — search now maps descriptions
+   (Greenhouse `?content=true` decoded to text, Ashby/Lever `descriptionPlain`). Verified
+   run: 152/152 jobs have descriptions → 41 YOE, 53 visa, 3 salary signals.
+3. **Enrich PERM match rate is 0.5%** (DEFERRED). Display name (`1Password`) ≠ DOL legal
+   entity (`AgileBits Inc`). Fuzzy match won't bridge this (no string overlap) — needs a
+   curated alias map or external brand→entity lookup. Low ROI for seed-stage startups that
+   file no PERM anyway. Deferred.
+
+LLM Pass 2 verified working on Bedrock `us.anthropic.claude-haiku-4-5-20251001-v1:0`
+(us-west-2): 50/50 jobs scored (12 STRONG / 27 MATCH). Note: current Anthropic models
+require an inference-profile ID; adapter writes body+output via temp files and passes
+`--cli-binary-format raw-in-base64-out`.
+
+## Resolved / Open Questions
+
+- [x] **PERM XLSX parsing** — implemented (`perm-import` builds `data/perm-cache.json`, ~30k employers).
+- [x] **Layoff data source** — `layoff-scraper` implemented; match rate still 0 (see limitation #3).
+- [x] **companies.json git-tracked** — yes (seed); enriched + caches are generated.
+- [ ] **Enrich name normalization** — map company display name → DOL legal entity (alias table / fuzzy match).
+- [ ] **Per-job description fetch** — required for salary/YOE/visa to work.
+- [ ] **Search semantics** — `--limit` should cap results, not companies; add ordering/"search all".
+- [ ] **Lever/Ashby rate limits** — default 5 concurrent; unverified at scale.
+- [ ] **sponsor-check as separate repo vs built-in** — currently built-in (enrich module).
