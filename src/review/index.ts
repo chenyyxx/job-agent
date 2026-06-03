@@ -44,23 +44,44 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
 
   const display = ranked.slice(0, opts.top ?? 20);
 
+  // Group displayed jobs by company; company outlook = best across its roles.
+  const groups = new Map<string, { jobs: typeof display; perm: number }>();
+  for (const d of display) {
+    const g = groups.get(d.j.company) ?? { jobs: [], perm: permByCompany.get(d.j.company.toLowerCase()) ?? 0 };
+    g.jobs.push(d);
+    groups.set(d.j.company, g);
+  }
+  const companies = [...groups.entries()]
+    .map(([name, g]) => {
+      const anyYes = g.jobs.some(d => d.j.parsed?.visa_sponsorship === true);
+      const anyNo = g.jobs.some(d => d.j.parsed?.visa_sponsorship === false);
+      const tier = (g.perm > 0 || anyYes) ? 0 : anyNo ? 2 : 1;
+      const verdict = g.perm > 0 ? `✅ Files PERM — ~${g.perm}/qtr (green-card capable)`
+        : anyYes ? "✅ Sponsors visas (per posting)"
+        : anyNo ? "❌ Some postings say NO sponsorship"
+        : "❓ Sponsorship not stated";
+      return { name, g, tier, verdict };
+    })
+    .sort((a, b) => a.tier - b.tier || b.g.jobs.length - a.g.jobs.length);
+
   console.log(`\n${"═".repeat(64)}`);
-  console.log(`  JOB REVIEW — Top ${display.length} of ${jobs.length}, ranked by green-card/PERM outlook`);
+  console.log(`  JOB REVIEW — ${companies.length} companies, ${display.length} of ${jobs.length} roles, by green-card/PERM outlook`);
   console.log(`${"═".repeat(64)}\n`);
 
-  for (let i = 0; i < display.length; i++) {
-    const { j, s } = display[i];
-    const fit = j.llm_match?.recommendation?.replace("_", " ") ?? "keyword fit";
-    const reason = j.llm_match?.reasoning ?? (j.match_reasons.length ? `matches: ${j.match_reasons.join(", ")}` : "");
-    const pay = j.parsed?.salary ? `$${j.parsed.salary.min / 1000 | 0}k–${j.parsed.salary.max / 1000 | 0}k` : "pay not listed";
-    const yoe = j.parsed?.yoe ? `${j.parsed.yoe.min}${j.parsed.yoe.max ? `–${j.parsed.yoe.max}` : "+"} yrs` : "yoe n/a";
-
-    console.log(`  #${i + 1}  ${j.title.trim()}  —  ${j.company}`);
-    console.log(`      VISA/PERM: ${s.verdict}`);
-    if (s.evidence) console.log(`        evidence: "${s.evidence}"`);
-    console.log(`      Fit: ${fit}${reason ? ` — ${reason}` : ""}`);
-    console.log(`      ${j.location} · ${pay} · ${yoe}`);
-    console.log(`      → ${j.url}\n`);
+  for (const c of companies) {
+    console.log(`▸ ${c.name}   ${c.verdict}   (${c.g.jobs.length} role${c.g.jobs.length > 1 ? "s" : ""})`);
+    for (const { j, s } of c.g.jobs) {
+      const fit = j.llm_match?.recommendation?.replace("_", " ") ?? "keyword fit";
+      const pay = j.parsed?.salary ? `$${j.parsed.salary.min / 1000 | 0}k–${j.parsed.salary.max / 1000 | 0}k` : "pay n/a";
+      const yoe = j.parsed?.yoe ? `${j.parsed.yoe.min}${j.parsed.yoe.max ? `–${j.parsed.yoe.max}` : "+"}y` : "yoe n/a";
+      const flag = j.parsed?.visa_sponsorship === false ? " ⚠️NO-sponsor" : "";
+      console.log(`    • ${j.title.trim()}  [${fit}${flag}]`);
+      console.log(`        ${j.location} · ${pay} · ${yoe}`);
+      if (s.evidence) console.log(`        visa evidence: "${s.evidence}"`);
+      if (j.llm_match?.reasoning) console.log(`        ${j.llm_match.reasoning}`);
+      console.log(`        → ${j.url}`);
+    }
+    console.log();
   }
 
   console.log(`${"─".repeat(64)}`);
