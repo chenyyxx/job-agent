@@ -121,6 +121,19 @@ async function main() {
       break;
     }
 
+    case "chat": {
+      const { createInterface } = await import("readline");
+      const { agentLoop } = await import("./agent/loop.js");
+      const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "you> " });
+      rl.prompt();
+      const lines = (async function* () {
+        for await (const line of rl) { yield line; rl.prompt(); }
+      })();
+      await agentLoop(lines);
+      rl.close();
+      break;
+    }
+
     case "resume": {
       const source = process.argv[3] ?? "./resume.txt";
       const llmConfig = loadLLMConfig(DATA_DIR);
@@ -233,6 +246,7 @@ Commands:
   review         Display top matches (--top, --require-h1b, --exclude-no-h1b, --require-perm, --min-perm-filings=N)
   apply          Open approved job URLs (--approved=file.json)
   run            Full pipeline (--locations=, --skip-titles=, --max-yoe=, --resolve-perm, --perm-only, --min-perm-filings=N, --limit=[test])
+  chat           Interactive agent mode — describe what you want in natural language
 `);
   }
 }

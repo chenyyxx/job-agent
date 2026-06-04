@@ -2,8 +2,10 @@
 // Pass 1: keyword overlap (free, fast)
 // Pass 2: LLM deep match (optional, pluggable)
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve, dirname } from "path";
 import type { Job } from "../search/index.js";
+import type { Profile } from "../resume/index.js";
 
 export interface MatchedJob extends Job {
   keyword_score: number;
@@ -59,12 +61,20 @@ function scoreJob(job: Job, cvTerms: string[]): { score: number; reasons: string
 export async function match(opts: MatchOptions): Promise<MatchedJob[]> {
   const jobs: Job[] = JSON.parse(readFileSync(opts.jobsPath, "utf-8"));
   const cvText = readFileSync(opts.cvPath, "utf-8");
-  const cvTerms = extractTerms(cvText);
+
+  // Use profile.json skills if available (richer than raw text extraction)
+  const profilePath = resolve(dirname(opts.jobsPath), "profile.json");
+  let cvTerms: string[];
+  if (existsSync(profilePath)) {
+    const profile: Profile = JSON.parse(readFileSync(profilePath, "utf-8"));
+    cvTerms = profile.skills.length > 0 ? profile.skills : extractTerms(cvText);
+    console.log(`Matching ${jobs.length} jobs using profile (${cvTerms.length} skills)...`);
+  } else {
+    cvTerms = extractTerms(cvText);
+    console.log(`Matching ${jobs.length} jobs against CV (${cvTerms.length} terms extracted)...`);
+  }
   const minScore = opts.minScore ?? 1;
-
-  console.log(`Matching ${jobs.length} jobs against CV (${cvTerms.length} terms extracted)...`);
-  console.log(`  Top CV terms: ${cvTerms.slice(0, 10).join(", ")}`);
-
+  console.log(`  Top terms: ${cvTerms.slice(0, 10).join(", ")}`);
   const matched: MatchedJob[] = jobs
     .map((job) => {
       const { score, reasons } = scoreJob(job, cvTerms);
