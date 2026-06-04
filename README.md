@@ -25,6 +25,15 @@ npx tsx src/index.ts run "software engineer" \
 
 This chains all 5 stages: Discover → Enrich → Search → Match → Review.
 
+## Modes
+
+| Mode | Command | Description |
+|------|---------|-------------|
+| **Pipeline** | `job-agent run [query] [flags]` | Deterministic, sequential, good for scheduled runs |
+| **Agent Chat** | `job-agent chat` *(TODO)* | Interactive LLM loop — say what you want in natural language |
+
+Pipeline mode is free (unless `--skip-llm` omitted). Agent mode requires Bedrock credentials.
+
 ## Modules
 
 ### 1. Discover
@@ -52,13 +61,14 @@ Output: `data/companies-enriched.json`
 
 ### 3. Search
 
-Queries live ATS boards (Greenhouse, Lever, Ashby) for open positions.
+Queries live ATS boards (Greenhouse, Lever, Ashby + 41 Workday companies) for open positions.
 
 ```bash
 npx tsx src/index.ts search "software engineer"
 npx tsx src/index.ts search "backend engineer" --locations=Remote,Seattle --skip-titles=intern,principal
 npx tsx src/index.ts search "software engineer" --perm-only          # Only search 157 known PERM filers
 npx tsx src/index.ts search "software engineer" --ats=greenhouse     # Single ATS
+npx tsx src/index.ts search "software engineer" --ats=workday        # Only Workday companies (41)
 npx tsx src/index.ts search "software engineer" --limit=5            # Limit companies (for testing)
 ```
 
@@ -170,6 +180,18 @@ Edit `config.json`:
 
 ## Coverage
 
-- **974** companies total (531 Greenhouse + 216 Lever + 227 Ashby)
+- **974** companies via Greenhouse (531) + Lever (216) + Ashby (227) — from SimplifyJobs
+- **41** Workday companies (NVIDIA, Intel, Cisco, Capital One, Boeing, Adobe, etc.) — probed from 1,248 candidates
 - **157** confirmed PERM filers (searchable with `--perm-only`)
-- **Missing:** Workday (Microsoft, Apple, NVIDIA, Amazon, Google) and Feishu (TikTok) — these are the top DOL filers but use unsupported ATS platforms
+- **Total: ~1,015 companies** across 4 ATS platforms
+- **Missing:** Microsoft (careers.microsoft.com), Apple (jobs.apple.com), TikTok (Feishu/lifeattiktok.com)
+
+### Workday Companies (41)
+
+Semiconductor: NVIDIA, Intel, Micron, Applied Materials, KLA, Analog Devices, GlobalFoundries, Marvell, Cadence
+Software/Cloud: Adobe, Cisco, Autodesk, CrowdStrike, Workday, HPE, Motorola Solutions, Fiserv, Ciena
+Finance: Capital One, Visa, BlackRock, TD Bank, Royal Bank of Canada
+Defense: RTX (Raytheon), Northrop Grumman, Boeing, Leidos, CACI, General Dynamics IT, Booz Allen, KBR
+Telecom: T-Mobile, AT&T, Comcast
+Healthcare/Industrial: GE Healthcare, GE Vernova, Abbott, Caterpillar, Teledyne
+Retail: Target, Walmart
