@@ -12,6 +12,7 @@ import { match } from "./match/index.js";
 import { loadLLMConfig, llmMatch } from "./match/llm-match.js";
 import { review } from "./review/index.js";
 import { apply } from "./apply/index.js";
+import { loadResume } from "./resume/index.js";
 import { readFileSync, writeFileSync } from "fs";
 import type { Job } from "./search/index.js";
 
@@ -120,6 +121,21 @@ async function main() {
       break;
     }
 
+    case "resume": {
+      const source = process.argv[3] ?? "./resume.txt";
+      const llmConfig = loadLLMConfig(DATA_DIR);
+      const llmExtract = llmConfig ? async (prompt: string) => {
+        const { bedrockText } = await import("./match/llm-match.js");
+        return bedrockText(prompt, llmConfig);
+      } : undefined;
+      await loadResume({
+        source,
+        outputPath: resolve(DATA_DIR, "profile.json"),
+        llmExtract,
+      });
+      break;
+    }
+
     case "apply": {
       const approved = getArg("--approved=") ?? resolve(DATA_DIR, "review-output.json");
       await apply({ approvedPath: resolve(approved) });
@@ -211,6 +227,7 @@ Commands:
   enrich         Stamp immigration + layoff data (--resolve-perm = LLM brand→DOL entity)
   perm-import    Import DOL PERM CSV files → perm-cache.json
   layoff-scrape  Fetch layoffs.fyi data → layoff-cache.json
+  resume         Load resume/profile (PDF, text, or @cv-pro-handle) → profile.json
   search         Query ATS boards (--ats=, --limit= [test], --locations=, --skip-titles=, --perm-only)
   match          Score + rank jobs (--cv=resume.txt, --skip-llm, --max-yoe=)
   review         Display top matches (--top, --require-h1b, --exclude-no-h1b, --require-perm, --min-perm-filings=N)
