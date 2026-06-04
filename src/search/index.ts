@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import type { Company } from "../discovery/index.js";
 import { WORKDAY_COMPANIES, searchWorkday } from "./workday.js";
+import { SMARTRECRUITERS_COMPANIES, searchSmartRecruiters } from "./smartrecruiters.js";
 
 export interface Job {
   id: string;
@@ -188,8 +189,29 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
 
   // --- Workday companies (separate from config-driven ATS) ---
   if (!opts.atsFilter || opts.atsFilter.includes("workday")) {
-    const wdCompanies = WORKDAY_COMPANIES;
-    console.log(`\nSearching ${wdCompanies.length} Workday companies...`);
+    let wdCompanies = WORKDAY_COMPANIES;
+
+    // --perm-only: filter Workday companies by PERM filings using perm-cache.json
+    if (opts.permOnly) {
+      const permPath = resolve(dirname(opts.companiesPath), "perm-cache.json");
+      if (existsSync(permPath)) {
+        const permData: any[] = JSON.parse(readFileSync(permPath, "utf-8"));
+        const SUFFIXES = /\b(inc|llc|corp|corporation|co|company|ltd|usa|the|group|holdings|international|technologies|systems|solutions)\b/gi;
+        const strip = (s: string) => s.toLowerCase().replace(SUFFIXES, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+        const permIndex = new Map(permData.map(e => [strip(e.employer), e.filings]));
+        const before = wdCompanies.length;
+        wdCompanies = wdCompanies.filter(c => {
+          const s = strip(c.name);
+          for (const [k, filings] of permIndex) {
+            if ((k.startsWith(s) || s.startsWith(k)) && filings > 0) return true;
+          }
+          return false;
+        });
+        console.log(`\n  PERM-only Workday: ${before} → ${wdCompanies.length} companies`);
+      }
+    }
+
+    console.log(`${opts.permOnly ? "" : "\n"}Searching ${wdCompanies.length} Workday companies...`);
     const WD_CONCURRENCY = 3;
     for (let i = 0; i < wdCompanies.length; i += WD_CONCURRENCY) {
       const batch = wdCompanies.slice(i, i + WD_CONCURRENCY);
@@ -206,6 +228,21 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
         }
       }
       if (i + WD_CONCURRENCY < wdCompanies.length) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+
+  // --- SmartRecruiters companies ---
+  if (!opts.atsFilter || opts.atsFilter.includes("smartrecruiters")) {
+    console.log(`\nSearching ${SMARTRECRUITERS_COMPANIES.length} SmartRecruiters companies...`);
+    const results = await Promise.allSettled(
+      SMARTRECRUITERS_COMPANIES.map(c => searchSmartRecruiters(c, opts.query))
+    );
+    for (let j = 0; j < results.length; j++) {
+      const r = results[j];
+      if (r.status === "fulfilled" && r.value.length > 0) {
+        console.log(`  ${SMARTRECRUITERS_COMPANIES[j].name} (smartrecruiters): ${r.value.length} matches`);
+        allJobs.push(...r.value);
+      }
     }
   }
 

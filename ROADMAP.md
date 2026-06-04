@@ -25,45 +25,35 @@ filers" → agent calls search/filter/match/show automatically.
 - [ ] `src/agent/prompts.ts` — system prompt with job-search expertise
 - [ ] Wire `chat` command in `src/index.ts`
 
-### Phase 2: Profile & Resume ⬜
-**Effort:** 30 min · **Value:** no more repeating flags every run
-
-- [ ] `profile.json` — target level, locations, salary floor, YOE range, excluded companies
-- [ ] Real `resume.txt` content (LLM match quality depends on it)
-- [ ] Pipeline reads profile as defaults (flags still override)
+### Phase 2: Profile & Resume ✅
+- [x] `profile.json` — 23 skills, locations, salary floor, excluded industries/companies
+- [x] Real `resume.txt` from 2023 resume
+- [x] Match module reads profile.json skills
 
 ### Phase 3: More ATS Coverage ⬜
 **Effort:** Variable · **Value:** fills remaining gaps
 
 | Target | ATS | PERM/qtr | Effort | Notes |
 |--------|-----|----------|--------|-------|
-| Microsoft | Custom (careers.microsoft.com) | ~1861 | 1-2 days | Has an API, needs research |
+| SmartRecruiters | SmartRecruiters API | varies | 1 day | Covers Spotify, Bosch (759 SimplifyJobs listings) |
 | TikTok | Feishu (lifeattiktok.com) | ~137 | 30 min | Blocked on live XHR capture |
-| SmartRecruiters | SmartRecruiters API | varies | 1 day | Covers Spotify, Visa alt, Bosch |
 | More Workday | Probe remaining 1200 candidates | varies | 1 hour | Expand beyond current 41 |
+| Microsoft | Custom (careers.microsoft.com) | ~1861 | 1-2 days | Has an API, needs research |
 
-Apple (jobs.apple.com) and Google (careers.google.com) use fully custom platforms —
-likely not worth building adapters for 2 companies.
-
-### Phase 4: Enrichment Improvements ⬜
+### Phase 4: Enrichment ⬜
 **Effort:** 1 day total
 
-- [ ] Cross-reference Workday companies with PERM data (currently separate paths)
-- [ ] WARN Act layoff data (cleaner than layoffs.fyi Airtable hack)
-- [ ] Salary enrichment from levels.fyi (comp data cross-ref)
+- [ ] Wire `--perm-only` to also filter Workday companies (cross-ref data ready, all 41 matched)
+- [ ] WARN Act layoff data (cleaner than layoffs.fyi)
+- [ ] Salary enrichment from levels.fyi
 
-### Phase 5: Apply & Tracking ⬜
-**Effort:** 2-3 days · **Value:** close the loop
+### Phase 5: Apply & Dashboard ⬜
+**Effort:** 3-5 days · **Value:** visual interface + application tracking
 
-- [ ] Application state DB (applied/pending/rejected per company, dedup across runs)
-- [ ] Form-fill for Greenhouse (known schema, `multipart-anon`)
+- [ ] Web dashboard for reviewing results visually
+- [ ] Application state DB (applied/pending/rejected, dedup across runs)
+- [ ] Form-fill for Greenhouse (`multipart-anon`)
 - [ ] Never auto-submit — always confirm per-job
-
-### Phase 6: Automation ⬜
-**Effort:** 1 hour · **Value:** weekly scheduled runs
-
-- [ ] MeshClaw cron: weekly pipeline run → Slack DM with top 10 new matches
-- [ ] Diff against previous run (only show NEW postings)
 - [ ] GitHub Actions CI (tsc + selftest on push)
 
 ## Deprecated
