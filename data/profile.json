@@ -1,25 +1,18 @@
 {
   "skills": [
-    "typescript",
-    "python",
-    "java",
-    "go",
-    "react",
-    "node.js",
-    "aws",
-    "kubernetes",
-    "docker",
-    "distributed systems",
-    "graphql",
-    "terraform",
-    "ci/cd",
-    "microservices",
-    "rest api"
+    "typescript", "java", "python", "javascript", "react", "node.js",
+    "aws", "kubernetes", "docker", "distributed systems", "terraform",
+    "microservices", "rest api", "graphql", "ci/cd",
+    "postgresql", "mysql", "mongodb", "dynamodb", "opensearch",
+    "spring boot", "next.js", "redux"
   ],
-  "yoe": 0,
+  "yoe": 5,
   "level": "mid",
-  "locations": [],
-  "visa_needs": "none",
-  "raw_resume": "Senior Software Development Engineer | 4+ years\n\nTechnical Skills:\n- Languages: TypeScript, Java, Python, Go\n- Frontend: React, Cloudscape Design System, Monaco Editor, Webpack\n- Backend: Node.js, GraphQL, REST APIs, microservices architecture\n- Cloud/Infra: AWS (CDK, CloudWatch, Lambda, DynamoDB, ECS, EKS), Kubernetes, Docker\n- Observability: distributed tracing, OpenTelemetry, metrics pipelines, CloudWatch, iGraph\n- Data: OpenSearch, Kinesis, DynamoDB, ClickHouse\n- Tools: Git, CI/CD pipelines, CDK, Terraform\n\nExperience:\n- Built self-service debuglet authoring platform (DSL engine, YAML schema, sandbox execution, AI agent integration)\n- Designed and implemented distributed tracing data pipelines processing billions of spans/day\n- Built client emission monitoring dashboards and alarm systems for data loss detection\n- Developed full-stack web applications with React + TypeScript + AWS backend\n- Created developer tools: code review automation, deployment orchestration, CLI tooling\n- Oncall operations: incident response, SEV2 triage, service health monitoring\n\nDomain Expertise:\n- Distributed systems and microservices\n- Observability and monitoring (traces, metrics, logs)\n- Developer experience and internal tooling\n- Full-stack web development\n- System design and architecture\n\nLocation: San Francisco Bay Area, open to Remote (US)\nVisa: Requires H-1B/PERM sponsorship\n",
+  "locations": ["Remote", "San Francisco", "Seattle"],
+  "salary_floor": 180000,
+  "visa_needs": "h1b",
+  "excluded_industries": ["defense", "government"],
+  "excluded_companies": ["Amazon"],
+  "raw_resume": "",
   "source": "text"
 }

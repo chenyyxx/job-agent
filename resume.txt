@@ -1,28 +1,45 @@
-Senior Software Development Engineer | 4+ years
+Yuxiang Chen
+Software Development Engineer | Seattle, WA
+chenyx.eric2013@gmail.com | github.com/chenyyxx
 
-Technical Skills:
-- Languages: TypeScript, Java, Python, Go
-- Frontend: React, Cloudscape Design System, Monaco Editor, Webpack
-- Backend: Node.js, GraphQL, REST APIs, microservices architecture
-- Cloud/Infra: AWS (CDK, CloudWatch, Lambda, DynamoDB, ECS, EKS), Kubernetes, Docker
-- Observability: distributed tracing, OpenTelemetry, metrics pipelines, CloudWatch, iGraph
-- Data: OpenSearch, Kinesis, DynamoDB, ClickHouse
-- Tools: Git, CI/CD pipelines, CDK, Terraform
+SUMMARY
+Software engineer with 5+ years of experience in distributed systems, observability, full-stack development, and data engineering. Currently L5 SDE at Amazon building trace visualization and monitoring infrastructure serving 10,000+ users.
 
-Experience:
-- Built self-service debuglet authoring platform (DSL engine, YAML schema, sandbox execution, AI agent integration)
-- Designed and implemented distributed tracing data pipelines processing billions of spans/day
-- Built client emission monitoring dashboards and alarm systems for data loss detection
-- Developed full-stack web applications with React + TypeScript + AWS backend
-- Created developer tools: code review automation, deployment orchestration, CLI tooling
-- Oncall operations: incident response, SEV2 triage, service health monitoring
+SKILLS
+Languages: TypeScript, Java, Python, JavaScript, SQL, Go, C++, R
+Frameworks: React, Node.js, Next.js, Spring Boot, Django, Redux, Flutter
+Infrastructure: AWS (EC2, S3, Lambda, ECS, CDK, CloudWatch, DynamoDB), Kubernetes, Docker, Terraform
+Data: PostgreSQL, MySQL, MongoDB, Apache Spark, OpenSearch, Kinesis
+Specialties: Distributed systems, observability/tracing, real-time data pipelines, microservices
 
-Domain Expertise:
-- Distributed systems and microservices
-- Observability and monitoring (traces, metrics, logs)
-- Developer experience and internal tooling
-- Full-stack web development
-- System design and architecture
+EXPERIENCE
 
-Location: San Francisco Bay Area, open to Remote (US)
-Visa: Requires H-1B/PERM sponsorship
+Amazon — Software Development Engineer (L5)
+Seattle, WA | Aug 2022 – Present
+- Built orchestration visualization tool for distributed tracing platform, serving 10,000+ internal users
+- Developed global dashboard for visualizing workflow latency using React, TypeScript, and Java
+- Streamlined monitoring processes, reducing latency analysis time by 50%
+- Enhanced platform features contributing to 30% improvement in user experience metrics
+- Designed self-service debuglet builder with DSL interpreter, sandbox execution, and AI agent integration
+- Built client emission monitoring dashboard for real-time data loss detection across 44 applications
+
+Harvard University — Research Software Engineer
+Boston, MA | Jul 2020 – Jul 2021
+- Developed Python data integration package for genomics pipelines, improving analysis speed 2X at petabyte scale
+- Built full-stack statistical analysis app using React, Django, MySQL, saving 80% of analysis time
+- Optimized XGBoost model training by 70% with distributed MPI implementation
+- Proposed novel multivariate testing method, reducing false positive rate to 0.05
+
+Bytek Technology — Software Engineer
+Guangzhou, China | 2019 – 2020
+- Developed face recognition mobile app using Flutter and TensorFlow Lite (+60% demo efficiency)
+- Implemented backend API using Django deployed on AWS, optimized model accuracy +10%
+
+EDUCATION
+Harvard University — MS coursework (Algorithms, ML Engineering, HCI) | 2021–2023
+Macalester College — BS Applied Computer Science, Mathematics & Statistics | 2016–2020
+
+TARGETS
+Locations: Remote, San Francisco, Seattle
+Level: Mid-senior (L5 equivalent)
+Visa: Requires H-1B sponsorship and PERM filing for green card
