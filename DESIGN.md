@@ -1,31 +1,74 @@
 # job-agent Design Document
 
-> Created: 2026-06-03 · Last updated: 2026-06-03 (evening)
-> Status: Working end-to-end. Discover→Enrich(+PERM resolve)→Search(+filters)→Match(+LLM)→Review→Apply.
-> CLI flags: search `--perm-only --locations --skip-titles --limit`; enrich `--resolve-perm`;
-> match `--max-yoe --skip-llm`; review `--require-h1b --exclude-no-h1b --min-perm-filings=N`.
-> Apply is a display-only stub. Biggest gap: Workday ATS coverage (see Known Limitations).
+> Created: 2026-06-03 · Last updated: 2026-06-04
+> Status: Working end-to-end pipeline. Workday adapter live (41 companies).
+> Two modes: **Pipeline CLI** (deterministic, run weekly) + **Agent Chat** (interactive, LLM-driven).
 
 ## Overview
 
-job-agent is an orchestrator for automated job searching. It coordinates pluggable tools
-(job-pro, cv-pro, sponsor-check) and built-in modules (discovery, match, review) into a
-pipeline that goes from company discovery to application submission with human review.
+job-agent is a dual-mode job search system:
+
+1. **Pipeline CLI** (`job-agent run`) — deterministic, sequential, free (no LLM unless `--skip-llm` omitted).
+   Chains Discover→Enrich→Search→Match→Review. Predictable, fast, good for scheduled runs.
+
+2. **Agent Chat** (`job-agent chat`) — interactive LLM loop with tools. User says "find me
+   distributed systems roles at PERM filers paying >$200k" and the agent decides which tools
+   to call, adjusts filters dynamically, and presents results conversationally.
+
+Both modes share the same underlying modules as tools.
 
 ## Architecture
 
 ```
-job-agent (this repo — orchestrator + new features)
-  ├── discover   (built-in: companies.json from SimplifyJobs + future sources)
-  ├── enrich     (built-in: PERM immigration + layoff data)
-  ├── search     (wraps job-pro or built-in ATS clients)
-  ├── match      (keyword scoring + optional LLM deep match)
-  ├── review     (human review gate — shows links, scores, visa risk)
-  └── apply      (form fill + submit — NEVER auto-applies)
+job-agent
+├── CLI (src/index.ts)
+│   ├── run          — deterministic pipeline (stages 1-5 sequentially)
+│   ├── discover     — standalone stage
+│   ├── search       — standalone stage (GH + Lever + Ashby + Workday)
+│   ├── match        — standalone stage
+│   ├── review       — standalone stage
+│   └── chat         — interactive agent mode (TODO)
+│
+├── Modules (shared by both CLI and agent)
+│   ├── discovery/   — company list from SimplifyJobs
+│   ├── enrich/      — PERM immigration + layoff data
+│   ├── search/      — ATS adapters (greenhouse, lever, ashby, workday)
+│   ├── match/       — keyword scoring + LLM deep match
+│   ├── review/      — human review gate
+│   └── apply/       — display-only stub
+│
+└── Agent (src/agent/ — TODO)
+    ├── tools.ts     — expose modules as callable tools
+    ├── loop.ts      — Bedrock Converse tool-use loop
+    └── prompts.ts   — system prompt with job-search expertise
+```
 
-External tools (standalone CLIs, minimal changes):
-  ├── job-pro    (forked, config-driven ATS search)
-  └── cv-pro     (forked, resume structuring + tailoring)
+### Agent Mode (TODO)
+
+The agent wraps modules as tools with a Bedrock Converse tool-use loop:
+
+```typescript
+// Tools the agent can call:
+tools = [
+  { name: "search_jobs", description: "Search ATS boards", params: { query, locations, ats, perm_only } },
+  { name: "filter_results", description: "Filter current results", params: { min_salary, max_yoe, locations, require_perm } },
+  { name: "match_jobs", description: "Score jobs against CV", params: { skip_llm, max_yoe } },
+  { name: "show_results", description: "Present top N matches to user", params: { top, sort_by } },
+  { name: "get_job_details", description: "Fetch full description for a job", params: { job_id } },
+  { name: "adjust_search", description: "Broaden or narrow current search", params: { add_locations, remove_companies, new_query } },
+]
+```
+
+Example interaction:
+```
+User: "Find me remote distributed systems roles that sponsor, paying over 180k"
+Agent: [calls search_jobs(query="distributed systems", locations=["Remote"], perm_only=true)]
+Agent: [calls match_jobs(skip_llm=false)]
+Agent: [calls filter_results(min_salary=180000)]
+Agent: "Found 12 matches. Top 3: Temporal (5 roles, $176-253k, strong PERM)..."
+User: "Exclude defense contractors"
+Agent: [calls filter_results(exclude_companies=["RTX","Boeing","Northrop Grumman",...])]
+Agent: "Refined to 8 matches..."
 ```
 
 ## Pipeline
@@ -174,42 +217,28 @@ The review stage outputs results formatted for human decision:
 }
 ```
 
-## Known Limitations (updated 2026-06-03 evening)
+## Known Limitations (updated 2026-06-04)
 
-0. **ATS discovery coverage (Workday) — biggest gap.** `companies.json` is seeded only from
-   SimplifyJobs (Greenhouse/Lever/Ashby). The largest PERM filers / best green-card targets —
-   Microsoft (~1861/qtr), Apple (629), NVIDIA (595), Amazon, Google, Meta, TikTok (137) — use
-   Workday (or Feishu for TikTok) and are absent from the search universe. We have their DOL PERM
-   data but can't reach their postings. A Workday adapter is the highest-value next step.
+0. ~~**ATS discovery coverage (Workday) — biggest gap.**~~ **FIXED** — Workday CXS adapter
+   implemented with 41 confirmed companies (NVIDIA, Intel, Cisco, Capital One, Boeing, etc.).
+   3,064 SWE jobs from Workday alone. Total coverage: 974 (GH/Lever/Ashby) + 41 (Workday) = 1,015.
+   Still missing: Microsoft (custom careers.microsoft.com), Apple (jobs.apple.com), TikTok (Feishu).
 
-1. ~~Search covers only an alphabetical slice.~~ **FIXED** — `--limit` is now a test-only
-   knob that *randomly samples* N companies; real runs pass no limit and search all 974.
-2. ~~Description parsing is 0% effective.~~ **FIXED** — search now maps descriptions
-   (Greenhouse `?content=true` decoded to text, Ashby/Lever `descriptionPlain`). Verified
-   run: 152/152 jobs have descriptions → 41 YOE, 53 visa, 3 salary signals.
-3. **Enrich PERM matching — BUILT.** Normalized matching (strip legal suffixes:
-   `Stripe`↔`Stripe, Inc.`) lifts match rate 5→157/974. Optional `--resolve-perm` adds a
-   grounded LLM step: guess the DOL legal entity for unmatched brands (`Notion`→`Notion Labs Inc`),
-   then VERIFY against the real DOL index (hallucinated names just don't match) → 178/974, cached
-   in `perm-resolve-cache.json`. `--min-perm-filings N` filters to companies filing ≥N PERM
-   cases/qtr — doubles as a "no startups" filter (startups don't appear in DOL data).
+1. **Agent mode not yet built.** Current CLI is deterministic pipeline only. Interactive
+   agent with tool-use loop is designed (see Architecture) but not implemented.
 
-Review is organized around the green-card/PERM outlook: each job shows a VISA/PERM verdict
-(files PERM / sponsors / does-not / unknown) with evidence, sorted so no-sponsor ranks last;
-numeric score replaced by LLM fit label + reasoning.
+2. ~~Search covers only an alphabetical slice.~~ **FIXED** — `--limit` is now a test-only
+   knob that *randomly samples* N companies; real runs pass no limit and search all.
 
-LLM Pass 2 verified working on Bedrock `us.anthropic.claude-haiku-4-5-20251001-v1:0`
-(us-west-2): 50/50 jobs scored (12 STRONG / 27 MATCH). Note: current Anthropic models
-require an inference-profile ID; adapter writes body+output via temp files and passes
-`--cli-binary-format raw-in-base64-out`.
+3. **Workday pagination capped at 200.** Each company returns max 200 results per query
+   (10 pages × 20). Companies like Cisco (472 total) and Capital One (841 total) are
+   under-fetched. Fixable by raising cap or using search text refinement.
 
-## Resolved / Open Questions
+4. **Enrich PERM matching — BUILT.** Normalized matching lifts rate 5→157/974. Optional
+   `--resolve-perm` adds grounded LLM step → 178/974, cached. Workday companies not yet
+   cross-referenced with PERM data (separate enrichment path needed).
 
-- [x] **PERM XLSX parsing** — implemented (`perm-import` builds `data/perm-cache.json`, ~30k employers).
-- [x] **Layoff data source** — `layoff-scraper` implemented; match rate still 0 (see limitation #3).
-- [x] **companies.json git-tracked** — yes (seed); enriched + caches are generated.
-- [ ] **Enrich name normalization** — map company display name → DOL legal entity (alias table / fuzzy match).
-- [ ] **Per-job description fetch** — required for salary/YOE/visa to work.
-- [ ] **Search semantics** — `--limit` should cap results, not companies; add ordering/"search all".
-- [ ] **Lever/Ashby rate limits** — default 5 concurrent; unverified at scale.
-- [ ] **sponsor-check as separate repo vs built-in** — currently built-in (enrich module).
+5. **No profile.json yet.** User preferences (target level, locations, salary floor) are
+   passed as CLI flags each run. Should be a persistent config.
+
+6. **resume.txt is a stub.** LLM match quality limited without real resume content.
