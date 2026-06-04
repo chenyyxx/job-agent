@@ -12,16 +12,55 @@ export interface WorkdayCompany {
 }
 
 // Top PERM filers + notable companies on Workday (confirmed working 2026-06-04)
+// Probed from SimplifyJobs listings — 1248 candidates → 41 curated with SWE results
 export const WORKDAY_COMPANIES: WorkdayCompany[] = [
+  // === Semiconductor / Hardware ===
   { name: "NVIDIA", tenant: "nvidia", wdServer: "wd5", site: "NVIDIAExternalCareerSite" },
-  { name: "Adobe", tenant: "adobe", wdServer: "wd5", site: "external_experienced" },
-  { name: "Visa", tenant: "visa", wdServer: "wd5", site: "visa" },
-  { name: "CrowdStrike", tenant: "crowdstrike", wdServer: "wd5", site: "crowdstrikecareers" },
-  { name: "Autodesk", tenant: "autodesk", wdServer: "wd1", site: "Ext" },
-  { name: "Workday", tenant: "workday", wdServer: "wd5", site: "Workday" },
-  { name: "Target", tenant: "target", wdServer: "wd5", site: "targetcareers" },
   { name: "Intel", tenant: "intel", wdServer: "wd1", site: "External" },
+  { name: "Micron Technology", tenant: "micron", wdServer: "wd1", site: "External" },
+  { name: "Applied Materials", tenant: "amat", wdServer: "wd1", site: "External" },
+  { name: "KLA", tenant: "kla", wdServer: "wd1", site: "Search" },
+  { name: "Analog Devices", tenant: "analogdevices", wdServer: "wd1", site: "External" },
+  { name: "GlobalFoundries", tenant: "globalfoundries", wdServer: "wd1", site: "External" },
+  { name: "Marvell", tenant: "marvell", wdServer: "wd1", site: "MarvellCareers" },
+  { name: "Cadence Design Systems", tenant: "cadence", wdServer: "wd1", site: "External_Careers" },
+  // === Software / Cloud ===
+  { name: "Adobe", tenant: "adobe", wdServer: "wd5", site: "external_experienced" },
+  { name: "Cisco", tenant: "cisco", wdServer: "wd5", site: "cisco_careers" },
+  { name: "Autodesk", tenant: "autodesk", wdServer: "wd1", site: "Ext" },
+  { name: "CrowdStrike", tenant: "crowdstrike", wdServer: "wd5", site: "crowdstrikecareers" },
+  { name: "Workday", tenant: "workday", wdServer: "wd5", site: "Workday" },
+  { name: "Hewlett Packard Enterprise", tenant: "hpe", wdServer: "wd5", site: "Jobsathpe" },
+  { name: "Motorola Solutions", tenant: "motorolasolutions", wdServer: "wd5", site: "Careers" },
+  { name: "Fiserv", tenant: "fiserv", wdServer: "wd5", site: "ext" },
+  { name: "Ciena", tenant: "ciena", wdServer: "wd5", site: "Careers" },
+  // === Finance / Fintech ===
+  { name: "Capital One", tenant: "capitalone", wdServer: "wd12", site: "Capital_One" },
+  { name: "Visa", tenant: "visa", wdServer: "wd5", site: "visa" },
+  { name: "BlackRock", tenant: "blackrock", wdServer: "wd1", site: "BlackRock_Professional" },
+  { name: "TD Bank", tenant: "td", wdServer: "wd3", site: "TD_Bank_Careers" },
+  { name: "Royal Bank of Canada", tenant: "rbc", wdServer: "wd3", site: "rbcglobal1" },
+  // === Defense / Govt Contractors ===
+  { name: "RTX (Raytheon)", tenant: "globalhr", wdServer: "wd5", site: "rec_rtx_ext_gateway" },
+  { name: "Northrop Grumman", tenant: "ngc", wdServer: "wd1", site: "Northrop_Grumman_External_Site" },
+  { name: "Boeing", tenant: "boeing", wdServer: "wd1", site: "EXTERNAL_CAREERS" },
+  { name: "Leidos", tenant: "leidos", wdServer: "wd5", site: "External" },
+  { name: "CACI", tenant: "caci", wdServer: "wd1", site: "external" },
+  { name: "General Dynamics IT", tenant: "gdit", wdServer: "wd5", site: "external_career_site" },
+  { name: "Booz Allen", tenant: "bah", wdServer: "wd1", site: "bah_jobs" },
+  { name: "KBR", tenant: "kbr", wdServer: "wd5", site: "KBR_Careers" },
+  // === Telecom / Enterprise ===
   { name: "T-Mobile", tenant: "tmobile", wdServer: "wd1", site: "External" },
+  { name: "AT&T", tenant: "att", wdServer: "wd1", site: "ATTGeneral" },
+  { name: "Comcast", tenant: "comcast", wdServer: "wd5", site: "Comcast_Careers" },
+  // === Healthcare / Industrial ===
+  { name: "GE Healthcare", tenant: "gehc", wdServer: "wd5", site: "GEHC_ExternalSite" },
+  { name: "GE Vernova", tenant: "gevernova", wdServer: "wd5", site: "only_confidential_executive_recruiting" },
+  { name: "Abbott", tenant: "abbott", wdServer: "wd5", site: "abbottcareers" },
+  { name: "Caterpillar", tenant: "cat", wdServer: "wd5", site: "CaterpillarCareers" },
+  { name: "Teledyne", tenant: "flir", wdServer: "wd1", site: "flircareers" },
+  // === Retail / Other ===
+  { name: "Target", tenant: "target", wdServer: "wd5", site: "targetcareers" },
   { name: "Walmart", tenant: "walmart", wdServer: "wd5", site: "WalmartExternal" },
 ];
 
