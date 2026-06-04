@@ -1,0 +1,85 @@
+════════ $ npx tsx src/index.ts discover
+Fetching SimplifyJobs listings...
+  17406 total listings
+  Discovered 975 companies:
+    greenhouse: 532
+    ashby: 227
+    lever: 216
+  Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/companies.json
+
+════════ $ npx tsx src/index.ts enrich --resolve-perm
+Enriching 975 companies...
+  PERM cache: 49456 employers (47459 normalized keys)
+  Layoff cache: 0 companies
+  Resolving 0 unmatched companies via LLM (757 cached)...
+  LLM resolved 24 additional companies to DOL PERM data
+  178 with PERM data, 0 with recent layoffs
+  Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/companies-enriched.json
+
+════════ $ npx tsx src/index.ts search "software engineer" --perm-only --limit=12 --locations="San Francisco,Remote,Seattle" --skip-titles="intern,staff,principal"
+  PERM-only: 975 → 178 companies (file PERM)
+Searching 12 companies for "software engineer"...
+  Twilio (greenhouse): 27 matches
+  BetterHelp (greenhouse): 1 matches
+  OpenGov (ashby): 21 matches
+  Affirm (greenhouse): 67 matches
+  Plaid (ashby): 18 matches
+  UiPath (ashby): 15 matches
+  Axon (greenhouse): 58 matches
+  Vanta (ashby): 31 matches
+
+════════ $ npx tsx src/index.ts match --cv=resume.txt --max-yoe=8 --skip-llm
+Matching 124 jobs against CV (30 terms extracted)...
+  Top CV terms: senior, software, development, engineer, years, technical, skills, languages, typescript, java
+  118 jobs above threshold (score >= 1)
+  Top 5:
+    [18] Senior Software Engineer, Backend (Cloud Compute) @ Affirm — https://job-boards.greenhouse.io/affirm/jobs/7511995003
+    [18] Senior Software Engineer, Backend (Cloud Compute) @ Affirm — https://job-boards.greenhouse.io/affirm/jobs/7511993003
+    [15] Senior Software Engineer, Backend (Continuous Delivery) @ Affirm — https://job-boards.greenhouse.io/affirm/jobs/7703209003
+    [15] Senior Software Engineer, Backend (Continuous Delivery) @ Affirm — https://job-boards.greenhouse.io/affirm/jobs/7703207003
+    [15] Senior Software Engineer, Backend (Infrastructure) @ Affirm — https://job-boards.greenhouse.io/affirm/jobs/7708921003
+
+════════ $ npx tsx src/index.ts review --top=5 --min-perm-filings=1
+
+════════════════════════════════════════════════════════════════
+  JOB REVIEW — 1 companies, 5 of 118 roles (fit-ranked)
+  H-1B = work visa (from posting) · PERM = green card (from DOL filings)
+════════════════════════════════════════════════════════════════
+
+▸ Affirm   (5 roles)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~27 filings/qtr
+    • Senior Software Engineer, Backend (Cloud Compute)  [keyword fit]
+        Remote Poland · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        → https://job-boards.greenhouse.io/affirm/jobs/7511995003
+    • Senior Software Engineer, Backend (Cloud Compute)  [keyword fit]
+        Remote Spain · pay n/a · yoe n/a · H-1B: ✅ Sponsors H-1B (per posting)
+        H-1B evidence: "…ty Groups Location - Remote Spain We are able to offer visa sponsorship for this role, but do require that someone is based in…"
+        → https://job-boards.greenhouse.io/affirm/jobs/7511993003
+    • Senior Software Engineer, Backend (Continuous Delivery)  [keyword fit]
+        Remote Canada · $150k–200k · 4+y · H-1B: ❓ H-1B not stated in posting
+        → https://job-boards.greenhouse.io/affirm/jobs/7703209003
+    • Senior Software Engineer, Backend (Continuous Delivery)  [keyword fit]
+        Remote US · $190k–240k · 4+y · H-1B: ❓ H-1B not stated in posting
+        → https://job-boards.greenhouse.io/affirm/jobs/7703207003
+    • Senior Software Engineer, Backend (Infrastructure)  [keyword fit]
+        Remote US · $195k–255k · 4+y · H-1B: ❓ H-1B not stated in posting
+        → https://job-boards.greenhouse.io/affirm/jobs/7708921003
+
+────────────────────────────────────────────────────────────────
+  PERM/green card (DOL): 118 companies file PERM · 0 no DOL record
+  H-1B (posting): 5 sponsor · 1 do NOT · rest unstated
+  Apply: open URLs above, or 'job-agent apply --approved <file>'. No auto-apply.
+
+════════ $ npx tsx src/index.ts apply
+
+  5 approved jobs to apply:
+
+  • Senior Software Engineer, Backend (Cloud Compute) @ Affirm
+    https://job-boards.greenhouse.io/affirm/jobs/7511995003
+
+  • Senior Software Engineer, Backend (Cloud Compute) @ Affirm
+    https://job-boards.greenhouse.io/affirm/jobs/7511993003
+
+  • Senior Software Engineer, Backend (Continuous Delivery) @ Affirm
+    https://job-boards.greenhouse.io/affirm/jobs/7703209003
+

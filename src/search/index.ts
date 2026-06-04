@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import type { Company } from "../discovery/index.js";
+import { WORKDAY_COMPANIES, searchWorkday } from "./workday.js";
 
 export interface Job {
   id: string;
@@ -182,6 +183,29 @@ export async function search(opts: SearchOptions): Promise<Job[]> {
         console.log(`  ${batch[j].name} (${batch[j].ats}): ${r.value.length} matches`);
         allJobs.push(...r.value);
       }
+    }
+  }
+
+  // --- Workday companies (separate from config-driven ATS) ---
+  if (!opts.atsFilter || opts.atsFilter.includes("workday")) {
+    const wdCompanies = WORKDAY_COMPANIES;
+    console.log(`\nSearching ${wdCompanies.length} Workday companies...`);
+    const WD_CONCURRENCY = 3;
+    for (let i = 0; i < wdCompanies.length; i += WD_CONCURRENCY) {
+      const batch = wdCompanies.slice(i, i + WD_CONCURRENCY);
+      const results = await Promise.allSettled(
+        batch.map(c => searchWorkday(c, opts.query))
+      );
+      for (let j = 0; j < results.length; j++) {
+        const r = results[j];
+        if (r.status === "fulfilled" && r.value.length > 0) {
+          console.log(`  ${batch[j].name} (workday): ${r.value.length} matches`);
+          allJobs.push(...r.value);
+        } else if (r.status === "rejected") {
+          console.log(`  ${batch[j].name} (workday): error - ${r.reason?.message ?? "failed"}`);
+        }
+      }
+      if (i + WD_CONCURRENCY < wdCompanies.length) await new Promise(r => setTimeout(r, 1000));
     }
   }
 

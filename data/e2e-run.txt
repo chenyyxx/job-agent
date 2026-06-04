@@ -1,0 +1,188 @@
+# job-agent definitive e2e — 2026-06-03T22:31:20Z
+$ npx tsx src/index.ts run "software engineer" --limit=40 --locations="San Francisco,Remote,Seattle" --skip-titles="intern,new grad,staff,principal,director,vp" --max-yoe=8 --resolve-perm --perm-only
+
+═══ job-agent pipeline ═══
+
+▸ Stage 1: Discover
+Fetching SimplifyJobs listings...
+  17406 total listings
+  Discovered 975 companies:
+    greenhouse: 532
+    ashby: 227
+    lever: 216
+  Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/companies.json
+
+▸ Stage 2: Enrich
+Enriching 975 companies...
+  PERM cache: 49456 employers (47459 normalized keys)
+  Layoff cache: 0 companies
+  Resolving 1 unmatched companies via LLM (756 cached)...
+  LLM resolved 24 additional companies to DOL PERM data
+  178 with PERM data, 0 with recent layoffs
+  Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/companies-enriched.json
+
+▸ Stage 3: Search
+  PERM-only: 975 → 178 companies (file PERM)
+Searching 40 companies for "software engineer"...
+  Gallup (greenhouse): 1 matches
+  Anaplan (greenhouse): 18 matches
+  Vanta (ashby): 31 matches
+  Astera Labs (greenhouse): 1 matches
+  2K (greenhouse): 4 matches
+  Confluent (ashby): 24 matches
+  OpenGov (ashby): 21 matches
+  Zoox (lever): 41 matches
+  Axon (greenhouse): 58 matches
+  Patreon (ashby): 6 matches
+  Palantir (lever): 81 matches
+  Xsolla (lever): 14 matches
+  Astronomer (ashby): 8 matches
+  Tinder (lever): 7 matches
+  Assembled (ashby): 4 matches
+  Thoughtworks (greenhouse): 4 matches
+  Plaid (ashby): 18 matches
+  Tekion (greenhouse): 10 matches
+  KAYAK (ashby): 8 matches
+  SentiLink (ashby): 3 matches
+  Neuralink (greenhouse): 18 matches
+  SpaceX (greenhouse): 205 matches
+  Datalab USA (lever): 2 matches
+  Ivanti (greenhouse): 5 matches
+  Benchling (ashby): 9 matches
+  Addepar (greenhouse): 32 matches
+  Bandwidth (greenhouse): 1 matches
+  ALTEN Technology (greenhouse): 5 matches
+  Dun & Bradstreet (lever): 2 matches
+  Title filter: 641 → 524 (excluded intern, new grad, staff, principal, director, vp)
+  Location filter: 524 → 83 (San Francisco, Remote, Seattle)
+
+Total: 83 jobs found. Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/jobs.json
+  Parsed: 4 salary, 25 YOE, 4 visa
+
+▸ Stage 4: Match
+Matching 83 jobs against CV (30 terms extracted)...
+  Top CV terms: senior, software, development, engineer, years, technical, skills, languages, typescript, java
+  82 jobs above threshold (score >= 1)
+  Top 5:
+    [12] Backend Senior Software Engineer, Identity @ Vanta — https://jobs.ashbyhq.com/vanta/470689af-bbce-4c96-818e-408bf4a6c8e5
+    [12] Senior Software Engineer, Infrastructure and Security @ Vanta — https://jobs.ashbyhq.com/vanta/63123fca-23fc-4b53-a642-1d2830456f69
+    [12] Senior Software Engineer, Infrastructure and Security @ Vanta — https://jobs.ashbyhq.com/vanta/ae22b418-3225-40b7-a0db-651a01a53d81
+    [12] Senior Software Engineer - Infrastructure @ Confluent — https://jobs.ashbyhq.com/confluent/4218f1c2-3679-4aff-a458-20ef09817fc4
+    [12] Frontend Senior Software Engineer I @ Axon — https://job-boards.greenhouse.io/axon/jobs/7505217003
+  Written to /local/home/chenyyxx/.meshclaw/workspace/job-agent/data/matched.json
+  LLM Match: evaluating 50 jobs (bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0, 3 concurrent)...
+  LLM results: 13 STRONG, 33 MATCH, 4 other
+
+▸ Stage 5: Review
+
+════════════════════════════════════════════════════════════════
+  JOB REVIEW — 6 companies, 20 of 82 roles (fit-ranked)
+  H-1B = work visa (from posting) · PERM = green card (from DOL filings)
+════════════════════════════════════════════════════════════════
+
+▸ Vanta   (10 roles)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~3 filings/qtr
+    • Senior Fullstack Software Engineer, Collaboration  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has strong fullstack mastery (React/TypeScript/GraphQL/Node.js) and platform architecture experience building reusable components for internal consumers. Demonstrates technical leadership, production reliability ownership, and cross-team collaboration—all core requirements. Main gap is lack of security/GRC domain expertise, though posting acknowledges many successful hires lack this background. Visa sponsorship requirement may be consideration depending on Vanta's capacity.
+        → https://jobs.ashbyhq.com/vanta/ffd3894e-8d69-4259-80ea-f192e94f4843
+    • Senior Software Engineer, Developer Experience  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        This candidate is an excellent fit for a Senior DevEx role. They have direct experience building developer tools, improving workflows, and scaling infrastructure. Their tech stack almost perfectly matches Vanta's (TypeScript, React, Node.js, AWS services). The primary gaps are GitHub Actions-specific experience and MongoDB familiarity, but these are learnable and don't overshadow their strong platform engineering background and proven ability to empower engineers and reduce toil.
+        → https://jobs.ashbyhq.com/vanta/dbd4e02c-0c6c-4031-a658-f57e88ec9943
+    • Senior Software Engineer, Enterprise Resilience  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❌ No H-1B sponsorship (per posting)
+        H-1B evidence: "…to work in the United States without the need for employer sponsorship. We are unable to offer visa sponsorship for this posit…"
+        Candidate has exceptional technical alignment with core infrastructure and observability needs. Strong distributed systems and reliability background directly transfers to defining reliability frameworks and SLOs. Primary gap is security/compliance domain knowledge (FedRAMP), but resume shows strong engineering foundation that could quickly absorb security context. Tech stack match is excellent (TypeScript, React, Node.js, AWS, ECS) and observability expertise is particularly valuable for SLO/metrics/incident response work.
+        → https://jobs.ashbyhq.com/vanta/1309bb8c-9cb5-463a-a30a-3a0c5fb5248a
+    • Senior Fullstack Engineer, Emerging Products & Product Platform  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has exceptional technical alignment with the core tech stack and senior fullstack experience building complex platforms. Strong background in distributed systems, monitoring, and developer tools demonstrates the architectural thinking needed for Vanta's monetization and platform work. MongoDB is the only notable tech gap (but easily learned given DynamoDB expertise), and security domain experience is explicitly noted as not required by Vanta.
+        → https://jobs.ashbyhq.com/vanta/e54ab450-192f-40f3-8029-37a44f2c09b1
+    • Senior Software Engineer, Infrastructure and Security  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has strong alignment with core infrastructure requirements (AWS, distributed systems, scalability, Node.js/TypeScript stack) and proven platform/infrastructure leadership. Security experience appears limited but role acknowledges many succeeds without prior security background. Main gaps are MongoDB-specific and explicit security primitives implementation, though transferable from observability background.
+        → https://jobs.ashbyhq.com/vanta/63123fca-23fc-4b53-a642-1d2830456f69
+    • Senior Software Engineer, Infrastructure and Security  [STRONG MATCH]
+        Remote - Canada · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has exceptional infrastructure, distributed systems, and DevOps fundamentals that directly align with the core technical requirements. Strong AWS and observability experience, plus proven ability to lead infrastructure projects and improve developer productivity. Main gaps are security-specific infrastructure knowledge (which job notes isn't required) and potential visa/location constraints for Canada role.
+        → https://jobs.ashbyhq.com/vanta/ae22b418-3225-40b7-a0db-651a01a53d81
+    • Senior Fullstack Software Engineer, GRC  [MATCH]
+        Remote U.S. · pay n/a · 5+y · H-1B: ❓ H-1B not stated in posting
+        Candidate has strong technical fit with required stack and demonstrated seniority, but lacks explicit security/GRC domain knowledge and greenfield project experience. Leadership experience is evident but not prominently highlighted. The observability background is a unique strength for GRC's continuous monitoring mission. Primary gap is security domain expertise, which Vanta indicates can be learned.
+        → https://jobs.ashbyhq.com/vanta/1513e1ac-5dca-4acb-a99d-8b5461115651
+    • Senior Fullstack Engineer, Emerging Products & Product Platform  [MATCH]
+        Remote - Canada · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Strong technical fit with all core tech requirements (React/TS/Node/GraphQL) and relevant full-stack + distributed systems experience. Primary concerns are MongoDB unfamiliarity (mitigated by similar database experience) and visa sponsorship complications for Canada-remote role, plus lack of security domain context (though posting notes this isn't required).
+        → https://jobs.ashbyhq.com/vanta/ae0fc39f-d207-4ef9-bf56-ca3eee285d2c
+    • Senior II Fullstack Engineer, Emerging Products & Product Platform  [STRONG MATCH]
+        Remote U.S. · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has excellent technical depth for the role with proven fullstack and systems expertise, remote eligibility, and seniority matching. However, lacks explicit security/compliance domain knowledge and demonstrated AI/ML product integration, which are central to Vanta's mission and the Activation team's focus. Strong fundamentals suggest quick ramp potential despite domain gap.
+        → https://jobs.ashbyhq.com/vanta/9ccca995-8888-44dc-b132-60a88cd6e2da
+    • Backend Senior Software Engineer, Identity  [MATCH]
+        Remote U.S. · pay n/a · 8+y · H-1B: ❓ H-1B not stated in posting
+        Strong technical foundation in backend systems, microservices, and infrastructure scaling, but significantly underqualifies on required 8 years experience (4 years current) and lacks specific identity/authentication domain expertise. The candidate's distributed systems and platform architecture skills are highly transferable, but the gap in identity protocols and authorization frameworks is substantial for a specialized Identity team role.
+        → https://jobs.ashbyhq.com/vanta/470689af-bbce-4c96-818e-408bf4a6c8e5
+
+▸ Confluent   (4 roles)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~40 filings/qtr
+    • Senior Software Engineer II  [STRONG MATCH]
+        Seattle, Washington · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has exceptional backend systems experience, distributed systems expertise, and proven technical leadership aligned with L4 expectations. Deep observability background is particularly valuable for Confluent. Only slight gap is lack of explicit event streaming/Kafka platform experience, though data pipeline expertise transfers well. Visa sponsorship requirement should be verified with Confluent's current H-1B capacity.
+        → https://jobs.ashbyhq.com/confluent/856698ca-f3cc-4ccd-986a-c57e7ef9e574
+    • Senior Software Engineer - Infrastructure  [STRONG MATCH]
+        CA Remote Ontario · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate has strong fundamentals in distributed systems, cloud infrastructure, and large-scale system operations with proven Java/Go expertise. Primary gaps are lack of explicit storage systems/databases experience and Scala/C++ skills, though these could be quickly acquired. AWS-centric background rather than multi-cloud is minor given the role's primary focus.
+        → https://jobs.ashbyhq.com/confluent/4218f1c2-3679-4aff-a458-20ef09817fc4
+    • Senior Software Engineer - Connect Platform  [MATCH]
+        Remote, Ontario, Canada · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate demonstrates strong technical alignment with core requirements (distributed systems, cloud platforms, production operations, on-call experience) and exceeds seniority expectations. However, lack of explicit Kafka/streaming platform experience and Java depth are notable gaps, plus the Canada location/visa sponsorship mismatch may be a blocker despite remote flexibility.
+        → https://jobs.ashbyhq.com/confluent/0605ed11-ec59-428f-9f69-b24b25c575ed
+    • Senior Software Engineer  [MATCH]
+        CA Remote Ontario · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Strong foundational match with relevant distributed systems, backend architecture, and cloud infrastructure expertise. However, lacks specific Kafka/event streaming and data governance domain knowledge that is central to Stream Governance products. The candidate's observability and data pipeline work translates well, but Confluent's specific tech stack and mission-critical SLA requirements would require ramp-up time.
+        → https://jobs.ashbyhq.com/confluent/0202ad88-bffb-43d9-b323-8af0b2015a0e
+
+▸ Gallup   (1 role)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~2 filings/qtr
+    • Senior Software Engineer  [STRONG MATCH]
+        San Francisco · $180k–230k · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Excellent alignment on core requirements: strong backend focus, full-stack capabilities, React/TypeScript, AWS expertise, API design, and observability. Notably demonstrates AI/LLM integration experience and startup-drive mentality. Primary gaps are NoSQL-heavy background versus role's relational DB emphasis and absence of explicit mobile/auth/secrets management examples, but these are addressable and don't significantly impact core qualifications.
+        → https://job-boards.greenhouse.io/gallup/jobs/4063897009
+
+▸ Axon   (1 role)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~7 filings/qtr
+    • Senior Software Engineer II, Vehicle Intelligence  [MATCH]
+        Seattle, Washington, United States · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate possesses strong technical foundations in distributed systems, cloud architecture, and full-stack development that align well with the role's core requirements. However, experience gap (4 vs 8+ years required) and lack of demonstrated ALPR/Vehicle Intelligence domain expertise are notable limitations. The absence of explicit AI tooling experience is a minor concern given the candidate's strong engineering foundation.
+        → https://job-boards.greenhouse.io/axon/jobs/7523038003
+
+▸ Plaid   (3 roles)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~16 filings/qtr
+    • Software Engineer, Backend  [STRONG MATCH]
+        San Francisco HQ · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate is significantly overqualified on technical breadth and depth, with strong backend systems design, API development, and infrastructure expertise directly applicable to Plaid's needs. Primary gap is lack of explicit fintech/financial services domain experience, but technical foundation is excellent for learning financial systems quickly.
+        → https://jobs.ashbyhq.com/plaid/5c5d4414-347c-4caa-be88-384dec2d074b
+    • Software Engineer, Backend  [STRONG MATCH]
+        Seattle Office · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate significantly exceeds experience requirements with proven ability to design/ship scalable systems, strong backend fundamentals, and full-stack capabilities. Primary gap is lack of fintech/financial services domain experience, though technical foundation is exceptionally strong and transferable. Location requires relocation from Bay Area to Seattle, which may be a consideration.
+        → https://jobs.ashbyhq.com/plaid/664df3be-6be0-432f-8a35-ec7af986fd0d
+    • Senior Software Engineer, Full Stack  [MATCH]
+        San Francisco HQ · pay n/a · yoe n/a · H-1B: ❓ H-1B not stated in posting
+        Candidate is a strong technical fit with proven full-stack capabilities, microservices expertise, and production-scale systems experience. Primary gaps are relational database focus (NoSQL background) and no explicit financial domain knowledge, though both are learnable for a senior engineer of this caliber.
+        → https://jobs.ashbyhq.com/plaid/a4a868a6-555a-4119-bbd7-6300f16d9045
+
+▸ Benchling   (1 role)
+    Green card (PERM): ✅ Files PERM / green card — DOL: ~1 filings/qtr
+    • Software Engineer, Full Stack (Enterprise Lifecycle) (High Seniority)  [STRONG MATCH]
+        San Francisco, CA · pay n/a · 8+y · H-1B: ❓ H-1B not stated in posting
+        Excellent technical fit with demonstrated ability to design and implement complex, scalable systems independently. Lacks specific regulatory/biotech domain knowledge but has the foundational architecture skills, observability expertise, and platform-building experience to quickly master GxP requirements. The debuglet platform and distributed tracing work show capability with complex domain-specific systems.
+        → https://jobs.ashbyhq.com/benchling/3687b373-439c-48d8-8de1-a8368c7527a2
+
+────────────────────────────────────────────────────────────────
+  PERM/green card (DOL): 82 companies file PERM · 0 no DOL record
+  H-1B (posting): 0 sponsor · 4 do NOT · rest unstated
+  Apply: open URLs above, or 'job-agent apply --approved <file>'. No auto-apply.
+
+
+═══ Pipeline complete. Review jobs above, then run: job-agent apply ═══
