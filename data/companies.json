@@ -1866,6 +1866,12 @@
     "source": "simplifyjobs"
   },
   {
+    "name": "Bot Auto",
+    "ats": "greenhouse",
+    "slug": "botauto",
+    "source": "simplifyjobs"
+  },
+  {
     "name": "Box",
     "ats": "greenhouse",
     "slug": "boxinc",
@@ -2697,6 +2703,12 @@
     "name": "GrowthLoop",
     "ats": "greenhouse",
     "slug": "growthloop",
+    "source": "simplifyjobs"
+  },
+  {
+    "name": "GuidePoint Security",
+    "ats": "greenhouse",
+    "slug": "guidepointsecurity",
     "source": "simplifyjobs"
   },
   {
