@@ -3,12 +3,7 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import type { MatchedJob } from "../match/index.js";
-
-export interface ReviewOptions {
-  matchedPath: string;
-  outputPath: string;
-  top?: number;
-}
+import { normalizeName, loadPermCache } from "../enrich/index.js";
 
 export interface ReviewOptions {
   matchedPath: string;
@@ -38,20 +33,31 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
   const jobs: MatchedJob[] = JSON.parse(readFileSync(opts.matchedPath, "utf-8"));
 
   // PERM (green-card) filing history per company — DOL enrichment, keyed by company.
-  const enrichedPath = resolve(dirname(opts.matchedPath), "companies-enriched.json");
+  const dataDir = dirname(opts.matchedPath);
+  const enrichedPath = resolve(dataDir, "companies-enriched.json");
   const permByCompany = new Map<string, number>();
   if (existsSync(enrichedPath)) {
     for (const c of JSON.parse(readFileSync(enrichedPath, "utf-8")) as any[]) {
       permByCompany.set((c.name ?? "").toLowerCase(), c.immigration?.filings_quarterly ?? 0);
     }
   }
+  // Fallback to the raw DOL cache (normalized) so companies NOT in companies-enriched.json
+  // — e.g. Workday / SmartRecruiters adapters — still resolve their PERM filings.
+  const permCache = loadPermCache(dataDir);
+  const filingsFor = (company: string): number => {
+    const lc = company.toLowerCase();
+    const enriched = permByCompany.get(lc);
+    if (enriched != null && enriched > 0) return enriched;
+    const rec = permCache.exact.get(lc) ?? permCache.norm.get(normalizeName(company));
+    return rec?.filings ?? enriched ?? 0;
+  };
 
   // Ranking = fit only (skills/experience). YOE/location are hard filters upstream;
   // visa/PERM are NOT ranked — they are optional post-filters + displayed info.
   const fit = (j: MatchedJob) => j.llm_match?.score ?? j.keyword_score ?? 0;
   let ranked = jobs
     .map((j, idx) => {
-      const filings = permByCompany.get(j.company.toLowerCase()) ?? 0;
+      const filings = filingsFor(j.company);
       return { j, idx, h: h1b(j), p: perm(filings), filings, score: fit(j) };
     })
     .sort((a, b) => b.score - a.score || a.idx - b.idx);

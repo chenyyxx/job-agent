@@ -45,13 +45,18 @@ function extractTerms(text: string): string[] {
 }
 
 function scoreJob(job: Job, cvTerms: string[]): { score: number; reasons: string[] } {
-  const blob = `${job.title} ${job.location} ${job.department}`.toLowerCase();
+  const titleBlob = `${job.title} ${job.location} ${job.department}`.toLowerCase();
+  const descBlob = (job.description ?? "").toLowerCase();
   let score = 0;
   const reasons: string[] = [];
 
   for (const term of cvTerms) {
-    if (blob.includes(term)) {
-      score += term.length > 4 ? 3 : 1;
+    const t = term.toLowerCase();
+    const inTitle = titleBlob.includes(t);
+    const inDesc = descBlob.includes(t);
+    if (inTitle || inDesc) {
+      // Title/dept matches weighted higher than description-body matches.
+      score += inTitle ? (term.length > 4 ? 3 : 1) : 1;
       if (reasons.length < 5) reasons.push(term);
     }
   }

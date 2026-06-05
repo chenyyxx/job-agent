@@ -30,7 +30,7 @@ This chains all 5 stages: Discover → Enrich → Search → Match → Review.
 | Mode | Command | Description |
 |------|---------|-------------|
 | **Pipeline** | `job-agent run [query] [flags]` | Deterministic, sequential, good for scheduled runs |
-| **Agent Chat** | `job-agent chat` *(TODO)* | Interactive LLM loop — say what you want in natural language |
+| **Agent Chat** | `job-agent chat` | Interactive LLM loop — say what you want in natural language |
 
 Pipeline mode is free (unless `--skip-llm` omitted). Agent mode requires Bedrock credentials.
 
@@ -182,8 +182,9 @@ Edit `config.json`:
 
 - **974** companies via Greenhouse (531) + Lever (216) + Ashby (227) — from SimplifyJobs
 - **41** Workday companies (NVIDIA, Intel, Cisco, Capital One, Boeing, Adobe, etc.) — probed from 1,248 candidates
+- **10** SmartRecruiters companies (ServiceNow, Western Digital, NBCUniversal, AbbVie, Bosch, etc.)
 - **157** confirmed PERM filers (searchable with `--perm-only`)
-- **Total: ~1,015 companies** across 4 ATS platforms
+- **Total: ~1,025 companies** across 5 ATS platforms
 - **Missing:** Microsoft (careers.microsoft.com), Apple (jobs.apple.com), TikTok (Feishu/lifeattiktok.com)
 
 ### Workday Companies (41)

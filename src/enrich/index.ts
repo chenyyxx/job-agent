@@ -22,7 +22,7 @@ export interface CompanyEnriched extends Company {
   };
 }
 
-interface PermRecord {
+export interface PermRecord {
   employer: string;
   filings: number;
   trend: "growing" | "stable" | "declining" | "frozen";
@@ -33,11 +33,11 @@ interface PermRecord {
 // Strip corporate suffixes/punctuation so brand names match DOL legal entities
 // ("Stripe" ↔ "Stripe, Inc.", "Spotify" ↔ "SPOTIFY USA, INC.").
 const SUFFIXES = /\b(inc|incorporated|llc|corp|corporation|co|company|ltd|limited|lp|llp|plc|usa|the)\b/g;
-function normalizeName(s: string): string {
+export function normalizeName(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(SUFFIXES, " ").replace(/\s+/g, " ").trim();
 }
 
-function loadPermCache(dataDir: string): { exact: Map<string, PermRecord>; norm: Map<string, PermRecord> } {
+export function loadPermCache(dataDir: string): { exact: Map<string, PermRecord>; norm: Map<string, PermRecord> } {
   const cachePath = resolve(dataDir, "perm-cache.json");
   const exact = new Map<string, PermRecord>();
   const norm = new Map<string, PermRecord>();

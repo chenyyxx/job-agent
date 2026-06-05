@@ -161,3 +161,28 @@ run mislabeled 17 as no-sponsor). Positive evidence example captured:
 - **`--min-perm-filings N`**: startup filter. Demo: default shortlist → `--min-perm-filings=1`
   drops Persona/Orb/AcuityMD (startups, ❓), keeps Temporal(~1)/Flexport(~4)/Redwood(~5)/Divergent(~4).
   PERM line now real in review output.
+
+
+## Match scoring + review PERM fallback fixes ✅ (2026-06-04)
+
+Two bugs found during a live e2e (creds-valid) run and fixed:
+
+**1. Keyword match collapsed 138 → 4.** `scoreJob` scored only `title + location +
+department` against `profile.json` skills. Niche multi-word skills (`distributed systems`,
+`kubernetes`) rarely appear in titles, and the fetched descriptions weren't scored — so
+~97% of jobs scored 0 and were dropped before the LLM saw them. Fix: score the job
+**description** too (title/dept matches still weighted higher).
+- Before: 138 jobs → 4 above threshold → LLM 2 STRONG / 2 MATCH
+- After:  138 jobs → **82 above threshold** → LLM **32 STRONG / 18 MATCH / 0 fail**
+
+**2. Review showed Workday/SmartRecruiters companies as "no DOL record".**
+`companies-enriched.json` only covers the 974 GH/Lever/Ashby companies, so Workday/
+SmartRecruiters companies (PERM-filtered at search via a separate cross-ref) had no PERM
+verdict in review. Fix: review now falls back to the raw DOL `perm-cache.json` (normalized
+match, via exported `normalizeName`/`loadPermCache` from enrich) for any company missing
+from the enriched file.
+- Before: review PERM resolved 1 of 4 companies
+- After:  **79 of 82** companies resolve real filings/qtr (Affirm ~27, Confluent ~40, Addepar ~7)
+
+Also confirmed: LLM match (Bedrock haiku-4.5) works with refreshed (non-`--once`) creds —
+the path that previously returned 0 on expired tokens.
