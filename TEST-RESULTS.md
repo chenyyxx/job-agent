@@ -186,3 +186,18 @@ from the enriched file.
 
 Also confirmed: LLM match (Bedrock haiku-4.5) works with refreshed (non-`--once`) creds —
 the path that previously returned 0 on expired tokens.
+
+### PERM prefix fallback for multi-entity corps (2026-06-05)
+
+**Problem:** Companies like BlackRock whose DOL legal entities include extra words
+(`BlackRock Financial Management, Inc.`) failed to match when the search name is
+just `"BlackRock"`. Suffix normalization strips `Inc.` but not `Financial Management`.
+
+**Fix:** After exact and normalized lookups fail, try prefix matching against all
+normalized DOL keys. `"blackrock"` now matches `"blackrock financial management"`,
+`"blackrock investment management"`, etc., summing their filings.
+
+- Before: 74/77 companies resolved, BlackRock showed "❓ No DOL record"
+- After:  **76/77** resolved, BlackRock shows **✅ ~78 filings/qtr**
+
+Full e2e confirmed (979 companies → 178 PERM → 60+35 searched → LLM match working).
