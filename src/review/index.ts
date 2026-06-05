@@ -48,8 +48,18 @@ export async function review(opts: ReviewOptions): Promise<MatchedJob[]> {
     const lc = company.toLowerCase();
     const enriched = permByCompany.get(lc);
     if (enriched != null && enriched > 0) return enriched;
-    const rec = permCache.exact.get(lc) ?? permCache.norm.get(normalizeName(company));
-    return rec?.filings ?? enriched ?? 0;
+    const nk = normalizeName(company);
+    const rec = permCache.exact.get(lc) ?? permCache.norm.get(nk);
+    if (rec) return rec.filings;
+    // Prefix fallback: "blackrock" matches "blackrock financial management"
+    if (nk) {
+      let best = 0;
+      for (const [key, val] of permCache.norm) {
+        if (key.startsWith(nk)) best += val.filings;
+      }
+      if (best > 0) return best;
+    }
+    return enriched ?? 0;
   };
 
   // Ranking = fit only (skills/experience). YOE/location are hard filters upstream;
